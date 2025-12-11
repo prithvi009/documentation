@@ -151,11 +151,6 @@
     "github": "https://github.com/tracksource-io",
     "linkedin": "https://linkedin.com/company/tracksource"
   },
-  "analytics": {
-    "posthog": {
-      "apiKey": ""
-    }
-  },
   "api": {
     "baseUrl": "https://events.tracksource.io",
     "auth": {
