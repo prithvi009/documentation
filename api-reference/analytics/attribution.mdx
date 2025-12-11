@@ -1,0 +1,182 @@
+---
+title: Attribution API
+description: 'Query attribution data and conversion paths'
+---
+
+## Attribution Report
+
+Get revenue and conversion attribution by channel.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/attribution?model=linear&period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `model` | string | `linear` | Attribution model |
+| `period` | string | `30d` | Time period |
+| `metric` | string | `revenue` | Metric to attribute |
+
+### Attribution Models
+
+- `first_touch` - 100% credit to first touchpoint
+- `last_touch` - 100% credit to last touchpoint
+- `linear` - Equal credit to all touchpoints
+- `time_decay` - More credit to recent touchpoints
+- `position_based` - 40% first, 40% last, 20% middle
+
+### Response
+
+```json
+{
+  "model": "linear",
+  "period": "30d",
+  "total_revenue": 124500.00,
+  "total_conversions": 1245,
+  "attribution": [
+    {
+      "channel": "facebook",
+      "source": "facebook",
+      "medium": "paid",
+      "attributed_revenue": 45230.00,
+      "attributed_conversions": 452,
+      "percentage": 36.3
+    },
+    {
+      "channel": "google",
+      "source": "google",
+      "medium": "cpc",
+      "attributed_revenue": 32150.00,
+      "attributed_conversions": 321,
+      "percentage": 25.8
+    },
+    {
+      "channel": "organic",
+      "source": "google",
+      "medium": "organic",
+      "attributed_revenue": 25120.00,
+      "attributed_conversions": 251,
+      "percentage": 20.2
+    },
+    {
+      "channel": "direct",
+      "source": "direct",
+      "medium": "none",
+      "attributed_revenue": 22000.00,
+      "attributed_conversions": 221,
+      "percentage": 17.7
+    }
+  ]
+}
+```
+
+## Conversion Paths
+
+Get common conversion paths.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/paths?period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "paths": [
+    {
+      "path": ["facebook", "direct"],
+      "conversions": 234,
+      "revenue": 23400.00,
+      "percentage": 18.8
+    },
+    {
+      "path": ["google", "facebook", "direct"],
+      "conversions": 198,
+      "revenue": 19800.00,
+      "percentage": 15.9
+    },
+    {
+      "path": ["facebook"],
+      "conversions": 156,
+      "revenue": 15600.00,
+      "percentage": 12.5
+    }
+  ],
+  "stats": {
+    "average_path_length": 2.3,
+    "average_days_to_convert": 5.7
+  }
+}
+```
+
+## Campaign Attribution
+
+Get attribution by campaign.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/campaigns?period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "campaigns": [
+    {
+      "campaign": "spring_sale",
+      "source": "facebook",
+      "medium": "paid",
+      "visitors": 2345,
+      "conversions": 123,
+      "revenue": 12300.00,
+      "conversion_rate": 5.24,
+      "roas": 4.1
+    },
+    {
+      "campaign": "brand_awareness",
+      "source": "facebook",
+      "medium": "paid",
+      "visitors": 5678,
+      "conversions": 89,
+      "revenue": 8900.00,
+      "conversion_rate": 1.57,
+      "roas": 1.8
+    }
+  ]
+}
+```
+
+## Assisted Conversions
+
+Get channels that assist but don't close.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/assisted?period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "channels": [
+    {
+      "channel": "facebook",
+      "direct_conversions": 452,
+      "assisted_conversions": 234,
+      "assist_ratio": 0.52
+    },
+    {
+      "channel": "email",
+      "direct_conversions": 89,
+      "assisted_conversions": 312,
+      "assist_ratio": 3.51
+    }
+  ]
+}
+```

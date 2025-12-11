@@ -1,0 +1,137 @@
+---
+title: Query Leads
+description: 'Retrieve lead events from TracksSource'
+---
+
+## Get Recent Leads
+
+Query leads captured through webhooks.
+
+### Request
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/events/recent?limit=100" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+Filter for lead events specifically:
+
+```javascript
+const response = await fetch('https://events.tracksource.io/v1/events/recent?limit=100', {
+  headers: { 'X-Tenant-ID': 'your_tenant_id' }
+});
+
+const data = await response.json();
+const leads = data.events.filter(e => e.event_type === 'lead');
+```
+
+### Lead Event Structure
+
+```json
+{
+  "id": "evt_abc123",
+  "event_type": "lead",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "source": "webhook:tally",
+  "properties": {
+    "email": "john@example.com",
+    "phone": "+1-555-123-4567",
+    "full_name": "John Doe",
+    "company": "Acme Inc",
+
+    "unified_customer_id": "cust_xyz789",
+    "linked_emails": ["john@example.com", "jdoe@work.com"],
+    "is_new_customer": false,
+
+    "form_source": "tally",
+    "traffic_source": "facebook",
+    "source_form_id": "form_123",
+
+    "fbp": "fb.1.xxx",
+    "fbc": "fb.1.xxx.IwAR...",
+    "utm_source": "facebook",
+    "utm_medium": "paid",
+    "utm_campaign": "spring_sale",
+
+    "raw_fields": {
+      "custom_field_1": "value1"
+    }
+  }
+}
+```
+
+## Identity Resolution
+
+Each lead includes identity resolution data:
+
+| Field | Description |
+|-------|-------------|
+| `unified_customer_id` | Unique ID linking all customer interactions |
+| `linked_emails` | All email addresses associated with this customer |
+| `is_new_customer` | Whether this is the first time seeing this customer |
+
+### Linking Example
+
+If a customer submits two forms with different emails but the same phone:
+
+```
+Form 1: john@personal.com, +1-555-123-4567
+Form 2: jdoe@work.com, +1-555-123-4567
+```
+
+Both leads will have:
+```json
+{
+  "unified_customer_id": "cust_xyz789",
+  "linked_emails": ["john@personal.com", "jdoe@work.com"]
+}
+```
+
+## Attribution Data
+
+Leads are enriched with attribution from:
+
+1. **Hidden form fields** - Passed via `anonymous_id`, `fbp`, `utm_source`, etc.
+2. **Session matching** - Linked to previous page views
+3. **Email matching** - Matched to previous events with same email
+
+```json
+{
+  "attribution": {
+    "fbp": "fb.1.xxx",
+    "fbc": "fb.1.xxx.IwAR...",
+    "utm_source": "facebook",
+    "utm_medium": "paid",
+    "utm_campaign": "spring_sale",
+    "landing_page": "/pricing",
+    "referrer": "https://facebook.com"
+  }
+}
+```
+
+## Exporting Leads
+
+### To CSV
+
+```javascript
+const response = await fetch('https://events.tracksource.io/v1/events/recent?limit=1000', {
+  headers: { 'X-Tenant-ID': 'your_tenant_id' }
+});
+
+const data = await response.json();
+const leads = data.events.filter(e => e.event_type === 'lead');
+
+// Convert to CSV
+const csv = leads.map(lead => ({
+  email: lead.properties.email,
+  name: lead.properties.full_name,
+  phone: lead.properties.phone,
+  source: lead.properties.traffic_source,
+  campaign: lead.properties.utm_campaign,
+  timestamp: lead.timestamp
+}));
+```
+
+### Webhook to Your CRM
+
+Configure outgoing webhooks in the dashboard to send leads to your CRM automatically.

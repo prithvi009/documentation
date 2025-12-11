@@ -1,0 +1,211 @@
+---
+title: Customers API
+description: 'Query customer profiles and analytics'
+---
+
+## List Customers
+
+Get a list of identified customers.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/customers?limit=100" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | number | `100` | Max customers to return |
+| `offset` | number | `0` | Pagination offset |
+| `sort` | string | `last_seen` | Sort field |
+| `order` | string | `desc` | Sort order |
+
+### Response
+
+```json
+{
+  "customers": [
+    {
+      "unified_customer_id": "cust_abc123",
+      "emails": ["john@personal.com", "jdoe@work.com"],
+      "phone": "+1-555-123-4567",
+      "name": "John Doe",
+      "company": "Acme Inc",
+      "first_seen": "2024-01-01T10:00:00Z",
+      "last_seen": "2024-01-15T14:30:00Z",
+      "total_events": 234,
+      "total_sessions": 12,
+      "total_revenue": 299.00,
+      "purchases": 2,
+      "first_touch": {
+        "source": "facebook",
+        "medium": "paid",
+        "campaign": "spring_sale"
+      }
+    }
+  ],
+  "total": 1245,
+  "limit": 100,
+  "offset": 0
+}
+```
+
+## Get Customer Profile
+
+Get detailed profile for a single customer.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/customers/cust_abc123" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "customer": {
+    "unified_customer_id": "cust_abc123",
+    "emails": ["john@personal.com", "jdoe@work.com"],
+    "phone": "+1-555-123-4567",
+    "name": "John Doe",
+    "company": "Acme Inc",
+
+    "timeline": {
+      "first_seen": "2024-01-01T10:00:00Z",
+      "last_seen": "2024-01-15T14:30:00Z",
+      "days_active": 15
+    },
+
+    "engagement": {
+      "total_events": 234,
+      "total_sessions": 12,
+      "total_page_views": 156,
+      "avg_session_duration": 245
+    },
+
+    "revenue": {
+      "total_revenue": 299.00,
+      "total_purchases": 2,
+      "average_order_value": 149.50,
+      "last_purchase": "2024-01-10T09:15:00Z"
+    },
+
+    "attribution": {
+      "first_touch": {
+        "source": "facebook",
+        "medium": "paid",
+        "campaign": "spring_sale",
+        "timestamp": "2024-01-01T10:00:00Z"
+      },
+      "last_touch": {
+        "source": "direct",
+        "medium": "none",
+        "timestamp": "2024-01-15T14:30:00Z"
+      },
+      "touchpoints": 5
+    }
+  }
+}
+```
+
+## Customer Events
+
+Get events for a specific customer.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/customers/cust_abc123/events?limit=50" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "events": [
+    {
+      "id": "evt_xyz789",
+      "event_type": "purchase",
+      "timestamp": "2024-01-10T09:15:00Z",
+      "properties": {
+        "revenue": 149.00,
+        "order_id": "ORD-456"
+      }
+    },
+    {
+      "id": "evt_xyz790",
+      "event_type": "page_view",
+      "timestamp": "2024-01-10T09:10:00Z",
+      "properties": {
+        "url": "/checkout"
+      }
+    }
+  ],
+  "total": 234
+}
+```
+
+## Customer Segments
+
+Get customer counts by segment.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/segments" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "segments": [
+    {
+      "name": "Purchased",
+      "count": 1245,
+      "percentage": 8.2
+    },
+    {
+      "name": "Leads",
+      "count": 3456,
+      "percentage": 22.7
+    },
+    {
+      "name": "Engaged",
+      "count": 5678,
+      "percentage": 37.3
+    },
+    {
+      "name": "Visitors",
+      "count": 4855,
+      "percentage": 31.8
+    }
+  ],
+  "total_customers": 15234
+}
+```
+
+## Search Customers
+
+Search customers by email, name, or phone.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/customers/search?q=john@example.com" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "results": [
+    {
+      "unified_customer_id": "cust_abc123",
+      "emails": ["john@example.com"],
+      "name": "John Doe",
+      "match_field": "email",
+      "match_score": 1.0
+    }
+  ],
+  "total": 1
+}
+```

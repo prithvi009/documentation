@@ -1,0 +1,201 @@
+---
+title: Facebook Conversions API
+description: 'Server-side tracking for Facebook ads'
+---
+
+## What is Facebook CAPI?
+
+The **Conversions API** (CAPI) is Facebook's server-to-server event tracking system. It sends conversion events directly from your server to Facebook, bypassing browser limitations.
+
+## Why Use CAPI?
+
+<CardGroup cols={2}>
+  <Card title="Better Match Rates" icon="chart-line">
+    40-60% match rate vs 10-20% with pixel alone
+  </Card>
+  <Card title="Ad Blocker Proof" icon="shield">
+    Works even when users block tracking scripts
+  </Card>
+  <Card title="iOS 14+ Compatible" icon="apple">
+    Required for accurate iOS tracking
+  </Card>
+  <Card title="Better Optimization" icon="bullseye">
+    More data = better ad targeting
+  </Card>
+</CardGroup>
+
+## How TracksSource CAPI Works
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Your Website                               │
+│  ┌──────────────────┐      ┌──────────────────┐                  │
+│  │ TracksSource SDK │      │  Facebook Pixel  │                  │
+│  │ (captures fbp,   │      │  (browser-side)  │                  │
+│  │  fbc, events)    │      │                  │                  │
+│  └────────┬─────────┘      └────────┬─────────┘                  │
+└───────────│─────────────────────────│────────────────────────────┘
+            │                         │
+            ▼                         │
+┌───────────────────────┐             │
+│   TracksSource        │             │
+│   Event Ingestion     │             │
+└───────────┬───────────┘             │
+            │                         │
+            ▼                         │
+┌───────────────────────┐             │
+│   Meta CAPI           │             │
+│   Connector           │─────────────┼──────▶ Facebook
+│   (server-side)       │             │        Ads Platform
+└───────────────────────┘             │
+                                      │
+                   Browser events ────┘
+```
+
+## Setup
+
+### 1. Get Facebook Credentials
+
+You'll need:
+- **Pixel ID** - From Events Manager
+- **Access Token** - From Events Manager → Settings → Generate Access Token
+
+### 2. Configure in Dashboard
+
+1. Go to **Settings** → **Integrations** → **Facebook CAPI**
+2. Enter your Pixel ID and Access Token
+3. Enable the integration
+4. Select which events to send
+
+### 3. Capture Facebook Parameters
+
+Ensure your SDK is capturing Facebook cookies:
+
+```javascript
+TracksSource('init', 'YOUR_TENANT_ID');
+
+// The SDK automatically captures:
+// - fbp (Facebook browser ID)
+// - fbc (Facebook click ID from URL)
+```
+
+The SDK automatically reads:
+- `_fbp` cookie (Facebook browser ID)
+- `fbclid` URL parameter (converted to `fbc` format)
+
+## Events Sent to Facebook
+
+TracksSource sends these events to CAPI:
+
+| TracksSource Event | Facebook Event | Parameters |
+|-------------------|----------------|------------|
+| `page_view` | `PageView` | `fbp`, `fbc`, URL |
+| `lead` | `Lead` | email, phone, fbp, fbc |
+| `signup` | `CompleteRegistration` | email, phone |
+| `add_to_cart` | `AddToCart` | value, currency, content_id |
+| `checkout_started` | `InitiateCheckout` | value, currency |
+| `purchase` | `Purchase` | value, currency, order_id |
+
+## Event Parameters
+
+Each event includes:
+
+```json
+{
+  "event_name": "Purchase",
+  "event_time": 1705320000,
+  "event_source_url": "https://example.com/checkout",
+  "action_source": "website",
+  "user_data": {
+    "em": ["hashed_email"],
+    "ph": ["hashed_phone"],
+    "fbp": "fb.1.1234567890.987654321",
+    "fbc": "fb.1.1234567890.IwAR3...",
+    "client_ip_address": "192.168.1.1",
+    "client_user_agent": "Mozilla/5.0..."
+  },
+  "custom_data": {
+    "value": 99.00,
+    "currency": "USD",
+    "order_id": "ORD-12345"
+  }
+}
+```
+
+## Deduplication
+
+TracksSource automatically deduplicates events:
+
+1. Each event gets a unique `event_id`
+2. Same `event_id` sent via both Pixel and CAPI
+3. Facebook deduplicates based on `event_id`
+
+```javascript
+// SDK generates event_id
+TracksSource('track', 'purchase', {
+  revenue: 99.00,
+  // event_id: "evt_abc123" (auto-generated)
+});
+
+// Same event_id sent to both:
+// - Facebook Pixel (browser)
+// - Facebook CAPI (server)
+```
+
+## Testing
+
+### Event Match Quality
+
+Check your Event Match Quality (EMQ) in Facebook Events Manager:
+
+- **Good**: 6.0+
+- **Great**: 8.0+
+- **Excellent**: 9.0+
+
+### Test Events
+
+Use Facebook's Test Events tool:
+
+1. Go to Events Manager → Test Events
+2. Copy the Test Event Code
+3. Add to your TracksSource config
+4. Submit test conversions
+5. Verify events appear in Test Events tab
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Events not appearing">
+    - Check Pixel ID and Access Token are correct
+    - Verify the integration is enabled
+    - Check Events Manager for errors
+    - Ensure events include `fbp` or `fbc`
+  </Accordion>
+  <Accordion title="Low match rate">
+    - Include email AND phone when available
+    - Ensure `fbp` and `fbc` are captured
+    - Check that cookies aren't being blocked
+  </Accordion>
+  <Accordion title="Duplicate events">
+    - Verify `event_id` is being passed
+    - Check deduplication window (48 hours)
+    - Review both Pixel and CAPI events
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Always Send Email" icon="envelope">
+    Email is the strongest match signal. Hash it before sending.
+  </Card>
+  <Card title="Include Phone" icon="phone">
+    Phone numbers improve match rates significantly.
+  </Card>
+  <Card title="Use Both Pixel + CAPI" icon="browsers">
+    Redundancy ensures maximum event capture.
+  </Card>
+  <Card title="Send Events Quickly" icon="bolt">
+    Events should be sent within minutes of occurring.
+  </Card>
+</CardGroup>

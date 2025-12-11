@@ -1,0 +1,167 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "TracksSource",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#3B82F6",
+    "light": "#60A5FA",
+    "dark": "#1E40AF",
+    "anchors": {
+      "from": "#3B82F6",
+      "to": "#8B5CF6"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "mailto:support@tracksource.io"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://app.tracksource.io"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    },
+    {
+      "name": "SDKs",
+      "url": "sdks"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/tracksource-io/tracksource"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://discord.gg/tracksource"
+    },
+    {
+      "name": "Blog",
+      "icon": "newspaper",
+      "url": "https://tracksource.io/blog"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "introduction",
+        "quickstart",
+        "how-it-works"
+      ]
+    },
+    {
+      "group": "Integration",
+      "pages": [
+        "integration/javascript-sdk",
+        "integration/react",
+        "integration/nextjs",
+        "integration/server-side"
+      ]
+    },
+    {
+      "group": "Form Providers",
+      "pages": [
+        "webhooks/overview",
+        "webhooks/tally",
+        "webhooks/typeform",
+        "webhooks/hubspot",
+        "webhooks/calendly",
+        "webhooks/custom-forms"
+      ]
+    },
+    {
+      "group": "Payment Gateways",
+      "pages": [
+        "payments/overview",
+        "payments/whop",
+        "payments/stripe"
+      ]
+    },
+    {
+      "group": "Attribution",
+      "pages": [
+        "attribution/overview",
+        "attribution/models",
+        "attribution/facebook-capi",
+        "attribution/google-ads"
+      ]
+    },
+    {
+      "group": "Self-Hosting",
+      "pages": [
+        "self-hosting/overview",
+        "self-hosting/docker",
+        "self-hosting/kubernetes"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "api-reference/overview",
+        "api-reference/authentication"
+      ]
+    },
+    {
+      "group": "Events API",
+      "pages": [
+        "api-reference/events/track",
+        "api-reference/events/batch",
+        "api-reference/events/query"
+      ]
+    },
+    {
+      "group": "Leads API",
+      "pages": [
+        "api-reference/leads/webhook",
+        "api-reference/leads/query"
+      ]
+    },
+    {
+      "group": "Analytics API",
+      "pages": [
+        "api-reference/analytics/overview",
+        "api-reference/analytics/attribution",
+        "api-reference/analytics/customers"
+      ]
+    },
+    {
+      "group": "JavaScript SDK",
+      "pages": [
+        "sdks/javascript/installation",
+        "sdks/javascript/configuration",
+        "sdks/javascript/tracking",
+        "sdks/javascript/identify"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/tracksource",
+    "github": "https://github.com/tracksource-io",
+    "linkedin": "https://linkedin.com/company/tracksource"
+  },
+  "analytics": {
+    "posthog": {
+      "apiKey": ""
+    }
+  },
+  "api": {
+    "baseUrl": "https://events.tracksource.io",
+    "auth": {
+      "method": "key",
+      "name": "X-Tenant-ID"
+    }
+  },
+  "openapi": "openapi.yaml"
+}

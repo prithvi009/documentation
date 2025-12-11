@@ -1,0 +1,99 @@
+---
+title: Authentication
+description: 'How to authenticate with the TracksSource API'
+---
+
+## Tenant ID
+
+TracksSource uses a **Tenant ID** for authentication. This is a unique identifier for your account.
+
+### Finding Your Tenant ID
+
+1. Log in to [app.tracksource.io](https://app.tracksource.io)
+2. Go to **Settings** → **API Keys**
+3. Copy your Tenant ID
+
+### Using Your Tenant ID
+
+Include the Tenant ID in the `X-Tenant-ID` header:
+
+```bash
+curl -X POST https://events.tracksource.io/v1/track \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: your_tenant_id" \
+  -d '{"event_type": "page_view", ...}'
+```
+
+### For Webhooks
+
+For webhook endpoints, the Tenant ID is part of the URL:
+
+```
+https://events.tracksource.io/leads/YOUR_TENANT_ID
+```
+
+## Client-Side vs Server-Side
+
+<Tabs>
+  <Tab title="Client-Side (SDK)">
+    The JavaScript SDK handles authentication automatically:
+
+    ```javascript
+    TracksSource('init', 'your_tenant_id');
+    ```
+
+    The Tenant ID is embedded in client-side code and is **public**. This is safe because:
+    - Events can only be written, not read
+    - Events are validated before processing
+    - Rate limits prevent abuse
+  </Tab>
+  <Tab title="Server-Side (API)">
+    For server-side API calls, keep your Tenant ID in environment variables:
+
+    ```bash
+    # .env
+    TRACKSOURCE_TENANT_ID=your_tenant_id
+    ```
+
+    ```javascript
+    // server.js
+    const response = await fetch('https://events.tracksource.io/v1/track', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+      },
+      body: JSON.stringify(eventData)
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Validate Server-Side" icon="shield-check">
+    For sensitive events like purchases, validate on your server before sending to TracksSource
+  </Card>
+  <Card title="Use Environment Variables" icon="key">
+    Never hardcode your Tenant ID in server-side code
+  </Card>
+  <Card title="Monitor Usage" icon="chart-line">
+    Check your dashboard for unusual activity patterns
+  </Card>
+  <Card title="Rotate if Compromised" icon="rotate">
+    Contact support if you believe your Tenant ID is compromised
+  </Card>
+</CardGroup>
+
+## IP Allowlisting (Enterprise)
+
+For enterprise accounts, you can restrict API access to specific IP addresses:
+
+1. Go to **Settings** → **Security**
+2. Add allowed IP addresses or CIDR ranges
+3. Enable IP restriction
+
+<Note>
+IP allowlisting is available on Enterprise plans only.
+</Note>

@@ -1,0 +1,124 @@
+---
+title: Batch Events
+api: POST /v1/batch
+description: 'Send multiple events in a single request'
+---
+
+## Request
+
+<ParamField header="X-Tenant-ID" type="string" required>
+  Your TracksSource Tenant ID
+</ParamField>
+
+<ParamField body="events" type="array" required>
+  Array of event objects (max 1000 per request)
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://events.tracksource.io/v1/batch \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: your_tenant_id" \
+  -d '{
+    "events": [
+      {
+        "event_type": "page_view",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "source": "web",
+        "anonymous_id": "anon_abc",
+        "properties": {},
+        "context": {
+          "page": {"url": "https://example.com/home"}
+        }
+      },
+      {
+        "event_type": "button_click",
+        "timestamp": "2024-01-15T10:30:15Z",
+        "source": "web",
+        "anonymous_id": "anon_abc",
+        "properties": {
+          "button_id": "cta-signup"
+        }
+      },
+      {
+        "event_type": "signup",
+        "timestamp": "2024-01-15T10:31:00Z",
+        "source": "web",
+        "anonymous_id": "anon_abc",
+        "properties": {
+          "email": "user@example.com",
+          "plan": "free"
+        }
+      }
+    ]
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the batch was processed
+</ResponseField>
+
+<ResponseField name="processed" type="number">
+  Number of events successfully processed
+</ResponseField>
+
+<ResponseField name="failed" type="number">
+  Number of events that failed validation
+</ResponseField>
+
+<ResponseField name="errors" type="array">
+  Details of failed events (if any)
+</ResponseField>
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "processed": 3,
+  "failed": 0
+}
+```
+
+### Partial Success Response
+
+```json
+{
+  "success": true,
+  "processed": 2,
+  "failed": 1,
+  "errors": [
+    {
+      "index": 1,
+      "errors": ["timestamp is required"]
+    }
+  ]
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Batch Size" icon="layer-group">
+    Send up to 1000 events per batch for optimal performance
+  </Card>
+  <Card title="Retry Failed" icon="rotate">
+    Retry only the failed events using the error index
+  </Card>
+  <Card title="Order Matters" icon="list-ol">
+    Events are processed in order - maintain chronological ordering
+  </Card>
+  <Card title="Compression" icon="compress">
+    Use gzip compression for large batches
+  </Card>
+</CardGroup>
+
+## Use Cases
+
+- **Historical Import**: Migrate events from another analytics platform
+- **Offline Events**: Sync events collected while offline
+- **Server-Side Batching**: Collect events and send periodically
+- **Data Pipeline**: Process events from data warehouse

@@ -1,0 +1,133 @@
+---
+title: API Overview
+description: 'TracksSource REST API reference'
+---
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://events.tracksource.io
+```
+
+For self-hosted instances, replace with your domain.
+
+## Authentication
+
+All API endpoints require a **Tenant ID** passed in the header:
+
+```bash
+X-Tenant-ID: your_tenant_id
+```
+
+<Warning>
+Keep your Tenant ID secure. Anyone with this ID can send events to your account.
+</Warning>
+
+## Rate Limits
+
+| Endpoint | Rate Limit |
+|----------|-----------|
+| `/v1/track` | 1000 req/min |
+| `/v1/batch` | 100 req/min |
+| `/leads/*` | 500 req/min |
+| `/v1/events/*` | 100 req/min |
+
+Rate limit headers are included in responses:
+
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1705320000
+```
+
+## Response Format
+
+All responses are JSON:
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "event_id": "evt_abc123",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Invalid event data",
+  "details": ["event_type is required"],
+  "status": 400
+}
+```
+
+## Common Status Codes
+
+| Code | Description |
+|------|-------------|
+| `200` | Success |
+| `400` | Bad Request - Invalid parameters |
+| `401` | Unauthorized - Missing or invalid Tenant ID |
+| `429` | Rate Limited - Too many requests |
+| `500` | Server Error |
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Track Event" icon="bolt" href="/api-reference/events/track">
+    `POST /v1/track`
+  </Card>
+  <Card title="Batch Events" icon="layer-group" href="/api-reference/events/batch">
+    `POST /v1/batch`
+  </Card>
+  <Card title="Query Events" icon="magnifying-glass" href="/api-reference/events/query">
+    `GET /v1/events/recent`
+  </Card>
+  <Card title="Lead Webhook" icon="webhook" href="/api-reference/leads/webhook">
+    `POST /leads/:tenant_id`
+  </Card>
+</CardGroup>
+
+## WebSocket API
+
+For real-time event streaming:
+
+```javascript
+const ws = new WebSocket('wss://events.tracksource.io/ws?tenant_id=YOUR_TENANT_ID');
+
+ws.onopen = () => {
+  console.log('Connected');
+
+  // Subscribe to specific event types (optional)
+  ws.send(JSON.stringify({
+    type: 'subscribe',
+    event_types: ['purchase', 'lead']
+  }));
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Event received:', data);
+};
+```
+
+## SDKs
+
+Official client libraries:
+
+<CardGroup cols={3}>
+  <Card title="JavaScript" icon="js" href="/sdks/javascript/installation">
+    Browser & Node.js
+  </Card>
+  <Card title="React" icon="react" href="/integration/react">
+    React hooks
+  </Card>
+  <Card title="Python" icon="python" href="#">
+    Coming soon
+  </Card>
+</CardGroup>

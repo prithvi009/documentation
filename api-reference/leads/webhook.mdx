@@ -1,0 +1,181 @@
+---
+title: Lead Webhook
+api: POST /leads/{tenant_id}
+description: 'Universal webhook endpoint for form submissions'
+---
+
+## Overview
+
+The universal webhook endpoint accepts form submissions from any provider and automatically:
+- Detects the source (Tally, Typeform, HubSpot, etc.)
+- Normalizes the data to a standard format
+- Enriches with attribution data
+- Resolves customer identity
+
+## Endpoint
+
+```
+POST https://events.tracksource.io/leads/{tenant_id}
+```
+
+<ParamField path="tenant_id" type="string" required>
+  Your TracksSource Tenant ID
+</ParamField>
+
+## Request
+
+The request body can be **any JSON payload** from a form provider. TracksSource automatically detects the source and extracts data.
+
+### Standard Fields
+
+For best results, include these fields in your payload:
+
+<ParamField body="email" type="string">
+  Customer email address
+</ParamField>
+
+<ParamField body="phone" type="string">
+  Customer phone number
+</ParamField>
+
+<ParamField body="name" type="string">
+  Customer full name
+</ParamField>
+
+<ParamField body="first_name" type="string">
+  Customer first name
+</ParamField>
+
+<ParamField body="last_name" type="string">
+  Customer last name
+</ParamField>
+
+<ParamField body="company" type="string">
+  Company name
+</ParamField>
+
+### Attribution Fields
+
+Include these for attribution tracking:
+
+<ParamField body="anonymous_id" type="string">
+  Visitor ID from TracksSource SDK
+</ParamField>
+
+<ParamField body="utm_source" type="string">
+  UTM source parameter
+</ParamField>
+
+<ParamField body="utm_medium" type="string">
+  UTM medium parameter
+</ParamField>
+
+<ParamField body="utm_campaign" type="string">
+  UTM campaign parameter
+</ParamField>
+
+<ParamField body="fbp" type="string">
+  Facebook browser ID cookie
+</ParamField>
+
+<ParamField body="fbc" type="string">
+  Facebook click ID cookie
+</ParamField>
+
+<ParamField body="gclid" type="string">
+  Google click ID
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://events.tracksource.io/leads/YOUR_TENANT_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "name": "John Doe",
+    "phone": "+1-555-123-4567",
+    "company": "Acme Inc",
+    "message": "I am interested in your product",
+    "anonymous_id": "anon_abc123",
+    "utm_source": "facebook",
+    "utm_medium": "paid",
+    "utm_campaign": "spring_sale",
+    "fbp": "fb.1.1234567890.987654321"
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the lead was captured successfully
+</ResponseField>
+
+<ResponseField name="event_id" type="string">
+  Unique identifier for the lead event
+</ResponseField>
+
+<ResponseField name="source_detected" type="string">
+  Detected form provider (tally, typeform, hubspot, unknown, etc.)
+</ResponseField>
+
+<ResponseField name="lead" type="object">
+  Normalized lead data
+</ResponseField>
+
+<ResponseField name="identity" type="object">
+  Identity resolution result
+</ResponseField>
+
+<ResponseField name="attribution" type="object">
+  Attribution data found
+</ResponseField>
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "event_id": "evt_abc123def456",
+  "source_detected": "unknown",
+  "lead": {
+    "email": "john@example.com",
+    "phone": "+1-555-123-4567",
+    "name": "John Doe"
+  },
+  "identity": {
+    "unified_customer_id": "cust_xyz789",
+    "is_new_customer": true,
+    "linked_emails": ["john@example.com"]
+  },
+  "attribution": {
+    "has_facebook": true,
+    "has_utm": true,
+    "fbp": "***",
+    "utm_source": "facebook",
+    "utm_medium": "paid",
+    "utm_campaign": "spring_sale"
+  },
+  "processing_time_ms": 45
+}
+```
+
+## Test Endpoint
+
+Test your webhook without saving data:
+
+```bash
+POST https://events.tracksource.io/leads/{tenant_id}/test
+```
+
+Returns what would be captured without storing the lead.
+
+## Setup Instructions Endpoint
+
+Get setup instructions for different providers:
+
+```bash
+GET https://events.tracksource.io/leads/{tenant_id}/setup
+```
+
+Returns step-by-step instructions for each supported provider.

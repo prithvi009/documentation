@@ -1,0 +1,210 @@
+---
+title: Attribution Models
+description: 'Understanding different attribution models and when to use them'
+---
+
+## What is an Attribution Model?
+
+An attribution model is a rule (or set of rules) that determines how credit for conversions is assigned to touchpoints in the customer journey.
+
+## Available Models
+
+### First Touch Attribution
+
+<Frame>
+```
+Facebook → Google → Direct → Purchase ($100)
+   ↓
+  100%      0%       0%
+
+Facebook gets: $100
+```
+</Frame>
+
+**Best for:**
+- Understanding awareness channels
+- Top-of-funnel optimization
+- Brand discovery analysis
+
+**Use when:**
+- You want to know what introduces customers to your brand
+- Optimizing for reach and awareness campaigns
+
+### Last Touch Attribution
+
+<Frame>
+```
+Facebook → Google → Direct → Purchase ($100)
+                       ↓
+   0%       0%       100%
+
+Direct gets: $100
+```
+</Frame>
+
+**Best for:**
+- Understanding converting channels
+- Bottom-of-funnel optimization
+- Sales team attribution
+
+**Use when:**
+- You want to know what closes deals
+- Optimizing for conversion campaigns
+
+### Linear Attribution
+
+<Frame>
+```
+Facebook → Google → Direct → Purchase ($100)
+   ↓         ↓        ↓
+  33%       33%      33%
+
+Facebook: $33.33
+Google: $33.33
+Direct: $33.33
+```
+</Frame>
+
+**Best for:**
+- Balanced view of all channels
+- Understanding full journey
+- Fair credit distribution
+
+**Use when:**
+- All touchpoints are equally important
+- Building a holistic marketing strategy
+
+### Time Decay Attribution
+
+<Frame>
+```
+Facebook → Google → Direct → Purchase ($100)
+(Day 1)    (Day 5)   (Day 7)
+   ↓         ↓         ↓
+  17%       33%       50%
+
+Facebook: $17
+Google: $33
+Direct: $50
+```
+</Frame>
+
+**Best for:**
+- Emphasizing conversion channels
+- Understanding recency effect
+- Balancing awareness vs conversion
+
+**Use when:**
+- Recent touchpoints are more influential
+- Sales cycles are short
+
+### Position Based (U-Shaped)
+
+<Frame>
+```
+Facebook → Google → Email → Direct → Purchase ($100)
+   ↓         ↓       ↓        ↓
+  40%       10%     10%      40%
+
+Facebook: $40
+Google: $10
+Email: $10
+Direct: $40
+```
+</Frame>
+
+**Best for:**
+- Valuing introduction and conversion
+- Balancing awareness and closing
+- Complex multi-touch journeys
+
+**Use when:**
+- First and last touches are most important
+- Middle touchpoints are nurturing
+
+## Comparing Models
+
+| Model | First Touch | Middle | Last Touch | Best For |
+|-------|------------|--------|------------|----------|
+| First Touch | 100% | 0% | 0% | Awareness |
+| Last Touch | 0% | 0% | 100% | Conversion |
+| Linear | Equal | Equal | Equal | Balanced |
+| Time Decay | Low | Medium | High | Recency |
+| Position Based | 40% | 20% split | 40% | Full funnel |
+
+## Choosing a Model
+
+<Tabs>
+  <Tab title="B2B SaaS">
+    **Recommended: Position Based or Linear**
+
+    B2B sales cycles are long with multiple touchpoints. Every interaction matters.
+
+    ```
+    LinkedIn Ad → Blog Post → Webinar → Sales Call → Purchase
+        ↓            ↓          ↓          ↓
+       25%         12.5%      12.5%       50%
+    ```
+  </Tab>
+  <Tab title="E-commerce">
+    **Recommended: Time Decay or Last Touch**
+
+    E-commerce has shorter cycles. Recent interactions drive purchases.
+
+    ```
+    Instagram Ad → Retargeting → Purchase
+         ↓            ↓
+        25%          75%
+    ```
+  </Tab>
+  <Tab title="Lead Generation">
+    **Recommended: First Touch or Linear**
+
+    Understanding what generates leads is crucial.
+
+    ```
+    Google Ad → Content → Form Submit
+        ↓         ↓
+       60%       40%
+    ```
+  </Tab>
+</Tabs>
+
+## Viewing Attribution in Dashboard
+
+1. Go to **Attribution** in your dashboard
+2. Select a date range
+3. Choose your attribution model from the dropdown
+4. View revenue and conversion breakdown by channel
+
+<Frame>
+  <img src="/images/attribution-dashboard.png" alt="Attribution Dashboard" />
+</Frame>
+
+## Custom Attribution Windows
+
+Set how far back to look for touchpoints:
+
+| Window | Use Case |
+|--------|----------|
+| 7 days | Impulse purchases, low-cost products |
+| 14 days | Standard e-commerce |
+| 30 days | Considered purchases (default) |
+| 60 days | B2B, high-value products |
+| 90 days | Enterprise sales |
+
+## Multi-Touch Reporting
+
+TracksSource provides multi-touch reports showing:
+
+1. **Conversion Paths** - Most common journeys
+2. **Path Length** - Average touchpoints before conversion
+3. **Time to Convert** - Average days from first touch to conversion
+4. **Assisted Conversions** - Channels that assist but don't close
+
+```
+Top Conversion Paths:
+1. Facebook → Direct → Purchase (23%)
+2. Google → Facebook → Direct → Purchase (18%)
+3. Email → Direct → Purchase (15%)
+```

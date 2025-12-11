@@ -1,0 +1,162 @@
+---
+title: Attribution Overview
+description: 'Understanding marketing attribution with TracksSource'
+---
+
+## What is Attribution?
+
+Attribution is the process of identifying which marketing touchpoints contribute to conversions. When a customer:
+
+1. Clicks a Facebook ad
+2. Visits your website
+3. Leaves and comes back via Google
+4. Signs up for a trial
+5. Eventually makes a purchase
+
+**Who gets credit?** Attribution answers this question.
+
+## The Attribution Challenge
+
+<Frame>
+```
+Customer Journey
+═══════════════════════════════════════════════════════════════
+
+Day 1          Day 3          Day 5          Day 7
+Facebook Ad → Google Search → Direct Visit → Purchase
+    ↓              ↓              ↓             ↓
+ $50 spent      $30 spent       Free        $200 revenue
+
+Question: Which channel drove the $200 sale?
+```
+</Frame>
+
+Without proper attribution:
+- **Facebook** reports: "We drove this conversion!"
+- **Google** reports: "No, we did!"
+- **You**: Confused about what actually works
+
+## How TracksSource Solves This
+
+### 1. First-Party Data Collection
+
+TracksSource uses first-party cookies and your own data:
+
+```javascript
+// What TracksSource captures on each visit
+{
+  anonymous_id: "anon_abc123",    // Persists across sessions
+  fbp: "fb.1.xxx",                // Facebook browser ID
+  fbc: "fb.1.xxx.IwAR...",        // Facebook click ID
+  gclid: "Cj0KCQiA...",           // Google click ID
+  utm_source: "facebook",
+  utm_medium: "paid",
+  utm_campaign: "spring_sale"
+}
+```
+
+### 2. Identity Resolution
+
+When a visitor becomes known (form submit, purchase), TracksSource links their identity:
+
+```
+Anonymous Session                    Known Customer
+┌─────────────────┐                 ┌─────────────────┐
+│ anon_abc123     │                 │ john@email.com  │
+│ 5 page views    │ ──── Link ────▶ │ Phone: +1...    │
+│ fbp: fb.1.xxx   │                 │ unified_id: x   │
+└─────────────────┘                 └─────────────────┘
+```
+
+### 3. Multi-Touch Attribution
+
+TracksSource tracks every touchpoint and lets you choose how to allocate credit:
+
+<CardGroup cols={2}>
+  <Card title="First Touch" icon="flag">
+    100% credit to the first interaction
+  </Card>
+  <Card title="Last Touch" icon="flag-checkered">
+    100% credit to the last interaction
+  </Card>
+  <Card title="Linear" icon="equals">
+    Equal credit to all touchpoints
+  </Card>
+  <Card title="Time Decay" icon="clock">
+    More credit to recent touchpoints
+  </Card>
+</CardGroup>
+
+## Key Concepts
+
+### Touchpoint
+
+Any interaction a customer has with your marketing:
+- Ad click
+- Email open
+- Social media engagement
+- Website visit
+- Form submission
+
+### Conversion
+
+The desired outcome you're measuring:
+- Lead (form submission)
+- Signup
+- Purchase
+- Subscription
+
+### Attribution Window
+
+How far back to look for touchpoints (default: 30 days).
+
+A customer who clicked an ad 45 days ago won't have that touchpoint attributed if your window is 30 days.
+
+### Channel
+
+The source of traffic:
+- **Paid Social** - Facebook, Instagram, TikTok ads
+- **Paid Search** - Google, Bing ads
+- **Organic Social** - Non-paid social media
+- **Organic Search** - SEO traffic
+- **Email** - Email campaigns
+- **Direct** - Direct traffic (no referrer)
+- **Referral** - Links from other websites
+
+## Attribution Data Flow
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Your Website                               │
+│  ┌─────────────────┐                                             │
+│  │ TracksSource SDK│ ─── Captures: UTM, fbp, fbc, gclid, etc.    │
+│  └─────────────────┘                                             │
+└──────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                    TracksSource Platform                          │
+│                                                                   │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐        │
+│  │   Events     │───▶│  Identity    │───▶│ Attribution  │        │
+│  │  Database    │    │  Resolution  │    │   Engine     │        │
+│  └──────────────┘    └──────────────┘    └──────────────┘        │
+│                                                  │                │
+│                                                  ▼                │
+│                                          ┌──────────────┐        │
+│                                          │  Dashboard   │        │
+│                                          │  + Reports   │        │
+│                                          └──────────────┘        │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+## What's Next?
+
+<CardGroup cols={2}>
+  <Card title="Attribution Models" icon="chart-pie" href="/attribution/models">
+    Deep dive into attribution models
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Server-side Facebook tracking
+  </Card>
+</CardGroup>

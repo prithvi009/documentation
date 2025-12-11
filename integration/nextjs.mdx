@@ -1,0 +1,276 @@
+---
+title: Next.js Integration
+description: 'TracksSource setup for Next.js applications'
+---
+
+## Installation
+
+```bash
+npm install @tracksource/react
+```
+
+## App Router (Next.js 13+)
+
+### 1. Create a Client Provider
+
+```tsx
+// components/providers/TracksSourceProvider.tsx
+'use client';
+
+import { TracksSourceProvider as TSProvider } from '@tracksource/react';
+
+export function TracksSourceProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <TSProvider
+      tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}
+      options={{
+        trackPageViews: true,
+        debug: process.env.NODE_ENV === 'development'
+      }}
+    >
+      {children}
+    </TSProvider>
+  );
+}
+```
+
+### 2. Add to Root Layout
+
+```tsx
+// app/layout.tsx
+import { TracksSourceProvider } from '@/components/providers/TracksSourceProvider';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <TracksSourceProvider>
+          {children}
+        </TracksSourceProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### 3. Track Events in Client Components
+
+```tsx
+// components/PurchaseButton.tsx
+'use client';
+
+import { useTracksSource } from '@tracksource/react';
+
+export function PurchaseButton({ product }) {
+  const { track } = useTracksSource();
+
+  const handleClick = () => {
+    track('purchase', {
+      email: 'user@example.com',
+      revenue: product.price,
+      product_id: product.id
+    });
+  };
+
+  return <button onClick={handleClick}>Buy Now</button>;
+}
+```
+
+## Pages Router
+
+### 1. Add to _app.tsx
+
+```tsx
+// pages/_app.tsx
+import { TracksSourceProvider } from '@tracksource/react';
+import type { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+      <Component {...pageProps} />
+    </TracksSourceProvider>
+  );
+}
+```
+
+### 2. Track Page Views
+
+```tsx
+// pages/_app.tsx
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { TracksSourceProvider, useTracksSource } from '@tracksource/react';
+
+function PageViewTracker() {
+  const router = useRouter();
+  const { page } = useTracksSource();
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      page({ path: url });
+    };
+
+    router.events.on('routeChangeComplete', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
+    };
+  }, [router, page]);
+
+  return null;
+}
+
+export default function App({ Component, pageProps }: AppProps) {
+  return (
+    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+      <PageViewTracker />
+      <Component {...pageProps} />
+    </TracksSourceProvider>
+  );
+}
+```
+
+## Server-Side Tracking
+
+Track server-side events using the API directly:
+
+```ts
+// app/api/purchase/route.ts
+import { NextResponse } from 'next/server';
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  // Track purchase server-side
+  await fetch('https://events.tracksource.io/v1/track', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID!
+    },
+    body: JSON.stringify({
+      event_type: 'purchase',
+      timestamp: new Date().toISOString(),
+      source: 'server',
+      properties: {
+        email: body.email,
+        revenue: body.amount,
+        currency: 'USD',
+        order_id: body.orderId
+      }
+    })
+  });
+
+  return NextResponse.json({ success: true });
+}
+```
+
+## Environment Variables
+
+```env
+# .env.local
+NEXT_PUBLIC_TRACKSOURCE_ID=your_tenant_id
+TRACKSOURCE_TENANT_ID=your_tenant_id  # For server-side
+```
+
+## Middleware Integration
+
+Track server-side in middleware:
+
+```ts
+// middleware.ts
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  // Get attribution params from URL
+  const utm_source = request.nextUrl.searchParams.get('utm_source');
+  const utm_medium = request.nextUrl.searchParams.get('utm_medium');
+  const utm_campaign = request.nextUrl.searchParams.get('utm_campaign');
+  const gclid = request.nextUrl.searchParams.get('gclid');
+  const fbclid = request.nextUrl.searchParams.get('fbclid');
+
+  // Store in cookies for server-side access
+  if (utm_source) {
+    response.cookies.set('ts_utm_source', utm_source, { maxAge: 60 * 60 * 24 * 30 });
+  }
+  if (gclid) {
+    response.cookies.set('ts_gclid', gclid, { maxAge: 60 * 60 * 24 * 90 });
+  }
+  if (fbclid) {
+    response.cookies.set('ts_fbc', `fb.1.${Date.now()}.${fbclid}`, { maxAge: 60 * 60 * 24 * 90 });
+  }
+
+  return response;
+}
+```
+
+## Form Actions (Server Actions)
+
+```tsx
+// app/signup/page.tsx
+import { useAttribution } from '@tracksource/react';
+
+async function submitSignup(formData: FormData) {
+  'use server';
+
+  const email = formData.get('email');
+  const attribution = {
+    anonymous_id: formData.get('anonymous_id'),
+    utm_source: formData.get('utm_source'),
+    fbp: formData.get('fbp')
+  };
+
+  // Track lead with attribution
+  await fetch('https://events.tracksource.io/v1/track', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID!
+    },
+    body: JSON.stringify({
+      event_type: 'signup',
+      source: 'server',
+      properties: {
+        email,
+        ...attribution
+      }
+    })
+  });
+}
+
+export default function SignupPage() {
+  return (
+    <SignupForm action={submitSignup} />
+  );
+}
+```
+
+## Vercel Analytics Integration
+
+TracksSource works alongside Vercel Analytics:
+
+```tsx
+// app/layout.tsx
+import { Analytics } from '@vercel/analytics/react';
+import { TracksSourceProvider } from '@/components/providers/TracksSourceProvider';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <TracksSourceProvider>
+          {children}
+        </TracksSourceProvider>
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+```

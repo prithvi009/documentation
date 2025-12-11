@@ -1,0 +1,130 @@
+---
+title: Introduction
+description: 'TracksSource is the open-source attribution platform that tells you exactly which ads, campaigns, and touchpoints drive your revenue.'
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/hero-light.png"
+  alt="TracksSource Dashboard"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/hero-dark.png"
+  alt="TracksSource Dashboard"
+/>
+
+## What is TracksSource?
+
+TracksSource is a **privacy-first, open-source attribution platform** designed for modern marketers and developers. It captures every customer touchpoint across your marketing channels and connects them to actual revenue.
+
+<CardGroup cols={2}>
+  <Card
+    title="5-Minute Setup"
+    icon="rocket"
+    href="/quickstart"
+  >
+    Add one script tag and start tracking in minutes. No complex configuration required.
+  </Card>
+  <Card
+    title="Universal Webhooks"
+    icon="webhook"
+    href="/webhooks/overview"
+  >
+    One webhook URL works with any form provider - Tally, Typeform, HubSpot, and more.
+  </Card>
+  <Card
+    title="Facebook CAPI"
+    icon="meta"
+    href="/attribution/facebook-capi"
+  >
+    Automatic server-side conversion tracking for better Facebook ad optimization.
+  </Card>
+  <Card
+    title="Self-Hostable"
+    icon="server"
+    href="/self-hosting/overview"
+  >
+    Run on your own infrastructure for complete data ownership and privacy compliance.
+  </Card>
+</CardGroup>
+
+## Why TracksSource?
+
+### The Problem
+
+Traditional analytics tools show you traffic, but not revenue. Ad platforms mark every conversion as their own. You're left wondering: **which marketing actually works?**
+
+### The Solution
+
+TracksSource connects the dots:
+
+```
+Ad Click → Website Visit → Form Submit → Purchase → Revenue
+    ↓           ↓              ↓           ↓         ↓
+  UTM       Anonymous ID    Lead Event   Purchase   Attribution
+ Params      + Cookies       + Email     Event     Report
+```
+
+## Key Features
+
+<AccordionGroup>
+  <Accordion title="Multi-Touch Attribution" icon="chart-line">
+    Track every touchpoint in your customer's journey. See the full path from first click to purchase with first-touch, last-touch, and linear attribution models.
+  </Accordion>
+
+  <Accordion title="Identity Resolution" icon="user-group">
+    Automatically link multiple emails, sessions, and devices to unified customer profiles. Know when the same person converts across different channels.
+  </Accordion>
+
+  <Accordion title="Real-Time Analytics" icon="bolt">
+    Watch events flow in real-time via WebSocket. See conversions the moment they happen, not hours later.
+  </Accordion>
+
+  <Accordion title="Privacy-First Design" icon="shield-check">
+    First-party data collection means no third-party cookies. GDPR and CCPA compliant by default. Self-host for complete control.
+  </Accordion>
+</AccordionGroup>
+
+## Architecture Overview
+
+TracksSource is built on a modern, scalable architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Your Website                              │
+│  ┌─────────────────┐                                            │
+│  │ TracksSource SDK│ ──────────────────────────────────┐        │
+│  └─────────────────┘                                   │        │
+└───────────────────────────────────────────────────────│────────┘
+                                                        ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    TracksSource Platform                         │
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
+│  │    Event     │───▶│  Attribution │───▶│   Facebook   │       │
+│  │  Ingestion   │    │    Engine    │    │    CAPI      │       │
+│  └──────────────┘    └──────────────┘    └──────────────┘       │
+│         │                   │                                    │
+│         ▼                   ▼                                    │
+│  ┌──────────────┐    ┌──────────────┐                           │
+│  │  PostgreSQL  │    │  ClickHouse  │                           │
+│  │   (Events)   │    │ (Analytics)  │                           │
+│  └──────────────┘    └──────────────┘                           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Quick Links
+
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="play" href="/quickstart">
+    Get started in 5 minutes
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Explore the API
+  </Card>
+  <Card title="SDKs" icon="cube" href="/sdks/javascript/installation">
+    Client libraries
+  </Card>
+</CardGroup>

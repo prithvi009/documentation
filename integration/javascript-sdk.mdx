@@ -1,0 +1,297 @@
+---
+title: JavaScript SDK
+description: 'Install and configure the TracksSource JavaScript SDK'
+---
+
+## Installation
+
+### Script Tag (Recommended)
+
+Add this snippet to your website's `<head>`:
+
+```html
+<script>
+  !function(t,r,a,c,k,s){t.TracksSource=t.TracksSource||function(){
+  (t.TracksSource.q=t.TracksSource.q||[]).push(arguments)},
+  s=r.createElement("script"),s.async=1,s.src=a,
+  r.head.appendChild(s)}(window,document,"https://cdn.tracksource.io/sdk.js");
+
+  TracksSource('init', 'YOUR_TENANT_ID');
+</script>
+```
+
+### NPM Package
+
+```bash
+npm install @tracksource/sdk
+```
+
+```javascript
+import TracksSource from '@tracksource/sdk';
+
+TracksSource.init('YOUR_TENANT_ID');
+```
+
+## Configuration Options
+
+```javascript
+TracksSource('init', 'YOUR_TENANT_ID', {
+  // Auto-track page views (default: true)
+  trackPageViews: true,
+
+  // Auto-track outbound link clicks (default: false)
+  trackOutboundLinks: false,
+
+  // Track form submissions automatically (default: false)
+  trackForms: false,
+
+  // Enable debug mode (default: false)
+  debug: false,
+
+  // Custom API endpoint (for self-hosted)
+  apiUrl: 'https://events.tracksource.io',
+
+  // Cookie domain (default: current domain)
+  cookieDomain: '.yourdomain.com',
+
+  // Cookie expiry in days (default: 365)
+  cookieExpiry: 365,
+
+  // Respect Do Not Track (default: true)
+  respectDnt: true,
+});
+```
+
+## Core Methods
+
+### Track Events
+
+```javascript
+// Basic event
+TracksSource('track', 'button_click');
+
+// Event with properties
+TracksSource('track', 'signup', {
+  plan: 'pro',
+  source: 'pricing_page'
+});
+
+// Track with callback
+TracksSource('track', 'purchase', {
+  revenue: 99.00,
+  currency: 'USD'
+}, function() {
+  console.log('Event tracked!');
+});
+```
+
+### Identify Users
+
+```javascript
+// Identify with email
+TracksSource('identify', {
+  email: 'john@example.com'
+});
+
+// Full identification
+TracksSource('identify', {
+  email: 'john@example.com',
+  phone: '+1-555-123-4567',
+  name: 'John Doe',
+  company: 'Acme Inc',
+  plan: 'enterprise'
+});
+```
+
+### Page Views
+
+```javascript
+// Manual page view (if auto-tracking is disabled)
+TracksSource('page');
+
+// Page view with custom properties
+TracksSource('page', {
+  category: 'docs',
+  name: 'API Reference'
+});
+```
+
+### Get Attribution Data
+
+```javascript
+// Get current attribution data
+TracksSource('ready', function() {
+  const data = TracksSource('getAttributionData');
+
+  console.log(data);
+  // {
+  //   anonymous_id: "anon_abc123",
+  //   session_id: "sess_xyz789",
+  //   utm_source: "facebook",
+  //   utm_medium: "paid",
+  //   utm_campaign: "spring_sale",
+  //   fbp: "fb.1.1234567890.987654321",
+  //   fbc: "fb.1.1234567890.IwAR3...",
+  //   gclid: "Cj0KCQiA...",
+  //   landing_page: "/pricing",
+  //   referrer: "https://facebook.com"
+  // }
+});
+```
+
+## Standard Events
+
+Use these standard event names for best compatibility with ad platforms:
+
+| Event | Description | Required Properties |
+|-------|-------------|---------------------|
+| `page_view` | Page was viewed | Auto-tracked |
+| `lead` | Lead form submitted | `email` |
+| `signup` | User signed up | `email` |
+| `login` | User logged in | `email` |
+| `purchase` | Purchase completed | `email`, `revenue`, `currency` |
+| `add_to_cart` | Item added to cart | `product_id`, `price` |
+| `checkout_started` | Checkout initiated | `cart_value` |
+
+### Purchase Event Example
+
+```javascript
+TracksSource('track', 'purchase', {
+  // Required
+  email: 'customer@example.com',
+  revenue: 149.00,
+  currency: 'USD',
+
+  // Recommended
+  order_id: 'ORD-12345',
+  product_id: 'PROD-001',
+  product_name: 'Pro Plan Annual',
+  quantity: 1,
+
+  // Optional
+  coupon: 'SAVE20',
+  discount: 30.00,
+  tax: 12.50,
+  shipping: 0
+});
+```
+
+## Form Integration
+
+### Auto-Track Forms
+
+```javascript
+TracksSource('init', 'YOUR_TENANT_ID', {
+  trackForms: true
+});
+```
+
+### Hidden Fields for Webhooks
+
+Add these hidden fields to pass attribution data through form submissions:
+
+```html
+<form id="contact-form">
+  <input type="email" name="email" required>
+  <input type="text" name="name" required>
+
+  <!-- Hidden attribution fields -->
+  <input type="hidden" name="anonymous_id" class="ts-field" data-ts="anonymous_id">
+  <input type="hidden" name="session_id" class="ts-field" data-ts="session_id">
+  <input type="hidden" name="utm_source" class="ts-field" data-ts="utm_source">
+  <input type="hidden" name="utm_medium" class="ts-field" data-ts="utm_medium">
+  <input type="hidden" name="utm_campaign" class="ts-field" data-ts="utm_campaign">
+  <input type="hidden" name="utm_content" class="ts-field" data-ts="utm_content">
+  <input type="hidden" name="utm_term" class="ts-field" data-ts="utm_term">
+  <input type="hidden" name="fbp" class="ts-field" data-ts="fbp">
+  <input type="hidden" name="fbc" class="ts-field" data-ts="fbc">
+  <input type="hidden" name="gclid" class="ts-field" data-ts="gclid">
+  <input type="hidden" name="landing_page" class="ts-field" data-ts="landing_page">
+
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+  // Auto-populate when SDK is ready
+  TracksSource('ready', function() {
+    const data = TracksSource('getAttributionData');
+    document.querySelectorAll('.ts-field').forEach(field => {
+      const key = field.dataset.ts;
+      if (data[key]) field.value = data[key];
+    });
+  });
+</script>
+```
+
+## SPA Support
+
+For single-page applications (React, Vue, Next.js):
+
+```javascript
+// Track virtual page views on route change
+router.afterEach((to) => {
+  TracksSource('page', {
+    path: to.path,
+    name: to.name
+  });
+});
+```
+
+## Debug Mode
+
+Enable debug mode to see events in the console:
+
+```javascript
+TracksSource('init', 'YOUR_TENANT_ID', {
+  debug: true
+});
+```
+
+This will log all events and API responses to the browser console.
+
+## Privacy Compliance
+
+### Consent Management
+
+```javascript
+// Initialize without tracking
+TracksSource('init', 'YOUR_TENANT_ID', {
+  autoTrack: false
+});
+
+// Enable tracking after consent
+function onUserConsent() {
+  TracksSource('enableTracking');
+  TracksSource('page'); // Track current page
+}
+
+// Disable tracking if consent revoked
+function onConsentRevoked() {
+  TracksSource('disableTracking');
+}
+```
+
+### Opt-Out
+
+```javascript
+// User opts out
+TracksSource('optOut');
+
+// User opts back in
+TracksSource('optIn');
+```
+
+## Error Handling
+
+```javascript
+TracksSource('track', 'purchase', {
+  revenue: 99.00
+}, {
+  success: function(response) {
+    console.log('Event tracked:', response.event_id);
+  },
+  error: function(error) {
+    console.error('Tracking failed:', error);
+  }
+});
+```

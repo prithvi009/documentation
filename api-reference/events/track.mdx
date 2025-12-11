@@ -1,0 +1,152 @@
+---
+title: Track Event
+api: POST /v1/track
+description: 'Send a single event to TracksSource'
+---
+
+## Request
+
+<ParamField header="X-Tenant-ID" type="string" required>
+  Your TracksSource Tenant ID
+</ParamField>
+
+<ParamField body="event_type" type="string" required>
+  Name of the event (e.g., `page_view`, `purchase`, `signup`)
+</ParamField>
+
+<ParamField body="timestamp" type="string" required>
+  ISO 8601 timestamp of when the event occurred
+</ParamField>
+
+<ParamField body="source" type="string" required>
+  Source of the event (`web`, `server`, `mobile`)
+</ParamField>
+
+<ParamField body="user_id" type="string">
+  Your internal user ID (if user is identified)
+</ParamField>
+
+<ParamField body="anonymous_id" type="string">
+  Anonymous visitor ID (from SDK or cookies)
+</ParamField>
+
+<ParamField body="session_id" type="string">
+  Session identifier
+</ParamField>
+
+<ParamField body="properties" type="object">
+  Event-specific properties
+</ParamField>
+
+<ParamField body="context" type="object">
+  Contextual information (page, device, campaign, etc.)
+</ParamField>
+
+## Example Request
+
+```bash
+curl -X POST https://events.tracksource.io/v1/track \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: your_tenant_id" \
+  -d '{
+    "event_type": "purchase",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "source": "web",
+    "user_id": "user_123",
+    "anonymous_id": "anon_abc",
+    "session_id": "sess_xyz",
+    "properties": {
+      "email": "customer@example.com",
+      "revenue": 99.00,
+      "currency": "USD",
+      "order_id": "ORD-12345",
+      "product_name": "Pro Plan",
+      "fbp": "fb.1.1234567890.987654321",
+      "fbc": "fb.1.1234567890.IwAR3..."
+    },
+    "context": {
+      "page": {
+        "url": "https://example.com/checkout",
+        "title": "Checkout",
+        "referrer": "https://example.com/pricing"
+      },
+      "campaign": {
+        "source": "facebook",
+        "medium": "paid",
+        "name": "spring_sale"
+      },
+      "device": {
+        "type": "mobile"
+      },
+      "location": {
+        "country": "US",
+        "city": "San Francisco"
+      }
+    }
+  }'
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the event was tracked successfully
+</ResponseField>
+
+<ResponseField name="event_id" type="string">
+  Unique identifier for the tracked event
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+  Server timestamp when the event was processed
+</ResponseField>
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "event_id": "evt_abc123def456",
+  "timestamp": "2024-01-15T10:30:00.123Z"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Invalid event data",
+  "details": ["event_type is required", "timestamp is required"]
+}
+```
+
+## Standard Event Types
+
+Use these event names for best compatibility:
+
+| Event Type | Description | Key Properties |
+|-----------|-------------|----------------|
+| `page_view` | Page was viewed | - |
+| `identify` | User identified | `email`, `user_id` |
+| `lead` | Lead form submitted | `email` |
+| `signup` | User signed up | `email` |
+| `login` | User logged in | `email` |
+| `purchase` | Purchase completed | `email`, `revenue`, `currency` |
+| `add_to_cart` | Added item to cart | `product_id`, `price` |
+| `checkout_started` | Began checkout | `cart_value` |
+
+## Properties for Facebook CAPI
+
+Include these properties to enable Facebook Conversions API:
+
+```json
+{
+  "properties": {
+    "email": "customer@example.com",    // Hashed and sent to Facebook
+    "phone": "+1-555-123-4567",          // Hashed and sent to Facebook
+    "fbp": "fb.1.xxx",                   // Facebook browser ID
+    "fbc": "fb.1.xxx.IwAR...",           // Facebook click ID
+    "revenue": 99.00,                    // For purchase events
+    "currency": "USD"
+  }
+}
+```

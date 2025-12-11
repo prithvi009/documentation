@@ -1,0 +1,352 @@
+---
+title: Server-Side Integration
+description: 'Track events from your backend using the TracksSource API'
+---
+
+## Overview
+
+Server-side tracking is essential for:
+- Tracking purchases and conversions
+- Capturing webhook events
+- Ensuring tracking works with ad blockers
+- Processing backend events (e.g., subscription renewals)
+
+## Authentication
+
+All API requests require your Tenant ID in the header:
+
+```bash
+X-Tenant-ID: your_tenant_id
+```
+
+## Track Events
+
+### Single Event
+
+```bash
+curl -X POST https://events.tracksource.io/v1/track \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: your_tenant_id" \
+  -d '{
+    "event_type": "purchase",
+    "timestamp": "2024-01-15T10:30:00Z",
+    "source": "server",
+    "properties": {
+      "email": "customer@example.com",
+      "revenue": 99.00,
+      "currency": "USD",
+      "order_id": "ORD-12345"
+    }
+  }'
+```
+
+### Batch Events
+
+```bash
+curl -X POST https://events.tracksource.io/v1/batch \
+  -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: your_tenant_id" \
+  -d '{
+    "events": [
+      {
+        "event_type": "purchase",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "source": "server",
+        "properties": {
+          "email": "customer1@example.com",
+          "revenue": 99.00
+        }
+      },
+      {
+        "event_type": "purchase",
+        "timestamp": "2024-01-15T10:31:00Z",
+        "source": "server",
+        "properties": {
+          "email": "customer2@example.com",
+          "revenue": 149.00
+        }
+      }
+    ]
+  }'
+```
+
+## Language Examples
+
+<Tabs>
+  <Tab title="Node.js">
+```javascript
+const axios = require('axios');
+
+async function trackPurchase(email, revenue, orderId) {
+  try {
+    const response = await axios.post(
+      'https://events.tracksource.io/v1/track',
+      {
+        event_type: 'purchase',
+        timestamp: new Date().toISOString(),
+        source: 'server',
+        properties: {
+          email,
+          revenue,
+          currency: 'USD',
+          order_id: orderId
+        }
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+        }
+      }
+    );
+
+    console.log('Event tracked:', response.data.event_id);
+  } catch (error) {
+    console.error('Tracking failed:', error.message);
+  }
+}
+```
+  </Tab>
+  <Tab title="Python">
+```python
+import requests
+import os
+from datetime import datetime
+
+def track_purchase(email: str, revenue: float, order_id: str):
+    response = requests.post(
+        'https://events.tracksource.io/v1/track',
+        json={
+            'event_type': 'purchase',
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'source': 'server',
+            'properties': {
+                'email': email,
+                'revenue': revenue,
+                'currency': 'USD',
+                'order_id': order_id
+            }
+        },
+        headers={
+            'Content-Type': 'application/json',
+            'X-Tenant-ID': os.environ['TRACKSOURCE_TENANT_ID']
+        }
+    )
+
+    if response.ok:
+        print(f"Event tracked: {response.json()['event_id']}")
+    else:
+        print(f"Tracking failed: {response.text}")
+```
+  </Tab>
+  <Tab title="Ruby">
+```ruby
+require 'net/http'
+require 'json'
+require 'uri'
+
+def track_purchase(email:, revenue:, order_id:)
+  uri = URI('https://events.tracksource.io/v1/track')
+
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+
+  request = Net::HTTP::Post.new(uri.path)
+  request['Content-Type'] = 'application/json'
+  request['X-Tenant-ID'] = ENV['TRACKSOURCE_TENANT_ID']
+  request.body = {
+    event_type: 'purchase',
+    timestamp: Time.now.utc.iso8601,
+    source: 'server',
+    properties: {
+      email: email,
+      revenue: revenue,
+      currency: 'USD',
+      order_id: order_id
+    }
+  }.to_json
+
+  response = http.request(request)
+  puts "Event tracked: #{JSON.parse(response.body)['event_id']}"
+end
+```
+  </Tab>
+  <Tab title="PHP">
+```php
+<?php
+
+function trackPurchase($email, $revenue, $orderId) {
+    $data = [
+        'event_type' => 'purchase',
+        'timestamp' => gmdate('Y-m-d\TH:i:s\Z'),
+        'source' => 'server',
+        'properties' => [
+            'email' => $email,
+            'revenue' => $revenue,
+            'currency' => 'USD',
+            'order_id' => $orderId
+        ]
+    ];
+
+    $ch = curl_init('https://events.tracksource.io/v1/track');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'X-Tenant-ID: ' . getenv('TRACKSOURCE_TENANT_ID')
+    ]);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $result = json_decode($response, true);
+    echo "Event tracked: " . $result['event_id'];
+}
+```
+  </Tab>
+  <Tab title="Go">
+```go
+package main
+
+import (
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "net/http"
+    "os"
+    "time"
+)
+
+type Event struct {
+    EventType  string                 `json:"event_type"`
+    Timestamp  string                 `json:"timestamp"`
+    Source     string                 `json:"source"`
+    Properties map[string]interface{} `json:"properties"`
+}
+
+func trackPurchase(email string, revenue float64, orderID string) error {
+    event := Event{
+        EventType: "purchase",
+        Timestamp: time.Now().UTC().Format(time.RFC3339),
+        Source:    "server",
+        Properties: map[string]interface{}{
+            "email":    email,
+            "revenue":  revenue,
+            "currency": "USD",
+            "order_id": orderID,
+        },
+    }
+
+    body, _ := json.Marshal(event)
+
+    req, _ := http.NewRequest("POST", "https://events.tracksource.io/v1/track", bytes.NewBuffer(body))
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("X-Tenant-ID", os.Getenv("TRACKSOURCE_TENANT_ID"))
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        return err
+    }
+    defer resp.Body.Close()
+
+    var result map[string]interface{}
+    json.NewDecoder(resp.Body).Decode(&result)
+
+    fmt.Printf("Event tracked: %s\n", result["event_id"])
+    return nil
+}
+```
+  </Tab>
+</Tabs>
+
+## Passing Attribution Data
+
+When tracking server-side, include attribution data from cookies or form submissions:
+
+```javascript
+// Example: Express.js endpoint
+app.post('/api/purchase', async (req, res) => {
+  const { email, amount, orderId } = req.body;
+
+  // Get attribution from cookies (set by client SDK)
+  const anonymous_id = req.cookies['ts_anonymous_id'];
+  const fbp = req.cookies['_fbp'];
+  const fbc = req.cookies['_fbc'];
+  const utm_source = req.cookies['ts_utm_source'];
+
+  await axios.post('https://events.tracksource.io/v1/track', {
+    event_type: 'purchase',
+    timestamp: new Date().toISOString(),
+    source: 'server',
+    anonymous_id,  // Link to client session
+    properties: {
+      email,
+      revenue: amount,
+      currency: 'USD',
+      order_id: orderId,
+      fbp,           // For Facebook CAPI
+      fbc,           // For Facebook CAPI
+      utm_source,
+    }
+  }, {
+    headers: {
+      'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+    }
+  });
+
+  res.json({ success: true });
+});
+```
+
+## Webhook Integration
+
+Receive events from your payment provider and forward to TracksSource:
+
+```javascript
+// Stripe webhook handler
+app.post('/webhooks/stripe', async (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+
+    await axios.post('https://events.tracksource.io/v1/track', {
+      event_type: 'purchase',
+      timestamp: new Date(session.created * 1000).toISOString(),
+      source: 'stripe_webhook',
+      properties: {
+        email: session.customer_email,
+        revenue: session.amount_total / 100,
+        currency: session.currency.toUpperCase(),
+        order_id: session.id,
+        stripe_customer_id: session.customer
+      }
+    }, {
+      headers: {
+        'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+      }
+    });
+  }
+
+  res.json({ received: true });
+});
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Always Include Email" icon="envelope">
+    Email is the primary identifier for linking events to customers
+  </Card>
+  <Card title="Pass Anonymous ID" icon="id-card">
+    Include `anonymous_id` to link server events to client sessions
+  </Card>
+  <Card title="Use Batch for Volume" icon="layer-group">
+    Use `/v1/batch` when sending more than 10 events at once
+  </Card>
+  <Card title="Handle Failures" icon="rotate">
+    Implement retry logic for failed requests
+  </Card>
+</CardGroup>

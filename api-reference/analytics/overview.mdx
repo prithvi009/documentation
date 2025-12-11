@@ -1,0 +1,136 @@
+---
+title: Analytics API
+description: 'Query analytics and attribution data'
+---
+
+## Overview
+
+The Analytics API provides access to aggregated metrics, attribution data, and customer insights.
+
+## Base URL
+
+```
+https://events.tracksource.io/v1/analytics
+```
+
+## Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/v1/analytics/summary` | High-level metrics summary |
+| `/v1/analytics/attribution` | Attribution breakdown |
+| `/v1/analytics/customers` | Customer analytics |
+| `/v1/analytics/channels` | Channel performance |
+
+## Summary Metrics
+
+Get high-level analytics summary.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/summary?period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `period` | string | `30d` | Time period (`7d`, `30d`, `90d`) |
+
+### Response
+
+```json
+{
+  "period": "30d",
+  "metrics": {
+    "total_events": 125000,
+    "unique_visitors": 15234,
+    "total_sessions": 28456,
+    "conversions": 1245,
+    "conversion_rate": 4.37,
+    "total_revenue": 124500.00,
+    "average_order_value": 100.00
+  },
+  "trends": {
+    "events_change": 12.5,
+    "visitors_change": 8.3,
+    "conversions_change": 15.2,
+    "revenue_change": 22.1
+  }
+}
+```
+
+## Channel Analytics
+
+Get performance metrics by channel.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/channels?period=30d" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Response
+
+```json
+{
+  "channels": [
+    {
+      "channel": "facebook",
+      "visitors": 5234,
+      "sessions": 8456,
+      "conversions": 423,
+      "revenue": 42300.00,
+      "conversion_rate": 5.0,
+      "roas": 3.5
+    },
+    {
+      "channel": "google",
+      "visitors": 4521,
+      "sessions": 6234,
+      "conversions": 312,
+      "revenue": 31200.00,
+      "conversion_rate": 5.0,
+      "roas": 2.8
+    }
+  ]
+}
+```
+
+## Time-Based Analytics
+
+Get metrics over time.
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/timeseries?period=30d&interval=day" \
+  -H "X-Tenant-ID: your_tenant_id"
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `period` | string | `30d` | Time period |
+| `interval` | string | `day` | Grouping (`hour`, `day`, `week`) |
+
+### Response
+
+```json
+{
+  "data": [
+    {
+      "date": "2024-01-01",
+      "events": 4234,
+      "visitors": 512,
+      "conversions": 42,
+      "revenue": 4200.00
+    },
+    {
+      "date": "2024-01-02",
+      "events": 4567,
+      "visitors": 534,
+      "conversions": 45,
+      "revenue": 4500.00
+    }
+  ]
+}
+```

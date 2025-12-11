@@ -1,0 +1,149 @@
+---
+title: Google Ads Integration
+description: 'Track Google Ads conversions with TracksSource'
+---
+
+## Overview
+
+TracksSource captures Google Click IDs (GCLID) to attribute conversions to Google Ads campaigns.
+
+## How It Works
+
+```
+Google Ad Click → Landing Page → Conversion → Attribution
+      ↓               ↓              ↓            ↓
+   ?gclid=xxx    SDK captures    Tracked     Linked to
+                    GCLID                    Google campaign
+```
+
+## Automatic GCLID Capture
+
+The TracksSource SDK automatically captures the `gclid` parameter:
+
+```javascript
+// User clicks Google Ad with URL:
+// https://example.com/?gclid=Cj0KCQiA...
+
+// SDK automatically captures and stores:
+{
+  gclid: "Cj0KCQiA...",
+  utm_source: "google",
+  utm_medium: "cpc",
+  // ... other parameters
+}
+```
+
+## Passing GCLID to Forms
+
+Include GCLID in form submissions for attribution:
+
+```html
+<input type="hidden" name="gclid" id="ts_gclid">
+
+<script>
+TracksSource('ready', function() {
+  const data = TracksSource('getAttributionData');
+  document.getElementById('ts_gclid').value = data.gclid || '';
+});
+</script>
+```
+
+## Google Ads Conversion Import
+
+### Option 1: Offline Conversion Import
+
+Export conversions from TracksSource and import to Google Ads:
+
+1. Go to TracksSource **Analytics** → **Export**
+2. Select conversions with GCLID
+3. Download CSV in Google's format
+4. Import to Google Ads → Conversions → Upload
+
+### Option 2: Google Ads API (Coming Soon)
+
+Automatic server-side conversion sending via Google Ads API.
+
+## Conversion Events
+
+Track these events for Google Ads optimization:
+
+| Event | Google Conversion | Use For |
+|-------|------------------|---------|
+| `lead` | Lead | Lead gen campaigns |
+| `signup` | Sign Up | Account creation |
+| `purchase` | Purchase | E-commerce |
+| `subscription_started` | Subscribe | Subscription business |
+
+## Example: Lead Tracking
+
+```javascript
+// When form is submitted
+TracksSource('track', 'lead', {
+  email: 'customer@example.com',
+  gclid: TracksSource('getAttributionData').gclid,
+  value: 50.00,  // Optional: lead value
+  currency: 'USD'
+});
+```
+
+## Example: Purchase Tracking
+
+```javascript
+TracksSource('track', 'purchase', {
+  email: 'customer@example.com',
+  revenue: 299.00,
+  currency: 'USD',
+  order_id: 'ORD-12345',
+  gclid: TracksSource('getAttributionData').gclid  // Links to Google Ad click
+});
+```
+
+## Attribution Reports
+
+View Google Ads performance in your dashboard:
+
+- **Campaigns** - Which campaigns drive conversions
+- **Ad Groups** - Performance by ad group
+- **Keywords** - Converting search terms (when UTM tagged)
+- **ROAS** - Return on ad spend
+
+## UTM Parameter Best Practices
+
+For better Google Ads tracking, use consistent UTM parameters:
+
+```
+?utm_source=google
+&utm_medium=cpc
+&utm_campaign={campaignid}
+&utm_content={adgroupid}
+&utm_term={keyword}
+&gclid={gclid}
+```
+
+Set these in Google Ads:
+1. Go to **Campaign Settings** → **URL Options**
+2. Add tracking template:
+```
+{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignid}&utm_term={keyword}&gclid={gclid}
+```
+
+## Enhanced Conversions
+
+TracksSource supports Enhanced Conversions data:
+
+```javascript
+TracksSource('track', 'purchase', {
+  // User data for enhanced conversions
+  email: 'customer@example.com',  // Hashed automatically
+  phone: '+1-555-123-4567',       // Hashed automatically
+
+  // Conversion data
+  revenue: 299.00,
+  currency: 'USD',
+  gclid: 'Cj0KCQiA...'
+});
+```
+
+<Note>
+Enhanced Conversions require email and/or phone to improve match rates.
+</Note>

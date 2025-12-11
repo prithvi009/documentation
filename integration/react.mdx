@@ -1,0 +1,268 @@
+---
+title: React Integration
+description: 'Using TracksSource with React applications'
+---
+
+## Installation
+
+```bash
+npm install @tracksource/react
+```
+
+## Setup
+
+### Provider Setup
+
+Wrap your app with the TracksSource provider:
+
+```jsx
+// App.jsx or main.jsx
+import { TracksSourceProvider } from '@tracksource/react';
+
+function App() {
+  return (
+    <TracksSourceProvider tenantId="YOUR_TENANT_ID">
+      <YourApp />
+    </TracksSourceProvider>
+  );
+}
+```
+
+### With Options
+
+```jsx
+<TracksSourceProvider
+  tenantId="YOUR_TENANT_ID"
+  options={{
+    trackPageViews: true,
+    debug: process.env.NODE_ENV === 'development',
+    apiUrl: 'https://events.tracksource.io'
+  }}
+>
+  <YourApp />
+</TracksSourceProvider>
+```
+
+## Hooks
+
+### useTracksSource
+
+```jsx
+import { useTracksSource } from '@tracksource/react';
+
+function PurchaseButton({ product }) {
+  const { track, identify } = useTracksSource();
+
+  const handlePurchase = async () => {
+    // Track purchase event
+    await track('purchase', {
+      email: user.email,
+      revenue: product.price,
+      currency: 'USD',
+      product_id: product.id,
+      product_name: product.name
+    });
+  };
+
+  return (
+    <button onClick={handlePurchase}>
+      Buy Now - ${product.price}
+    </button>
+  );
+}
+```
+
+### useAttribution
+
+Get attribution data for forms:
+
+```jsx
+import { useAttribution } from '@tracksource/react';
+
+function SignupForm() {
+  const attribution = useAttribution();
+
+  const handleSubmit = async (formData) => {
+    // Attribution data is automatically included
+    await fetch('/api/signup', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...formData,
+        ...attribution
+      })
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {/* Your form fields */}
+
+      {/* Hidden fields for form providers */}
+      <input type="hidden" name="anonymous_id" value={attribution.anonymous_id} />
+      <input type="hidden" name="utm_source" value={attribution.utm_source} />
+      <input type="hidden" name="fbp" value={attribution.fbp} />
+    </form>
+  );
+}
+```
+
+### usePageView
+
+Automatically track page views in SPAs:
+
+```jsx
+import { usePageView } from '@tracksource/react';
+
+function Page({ title, category }) {
+  // Tracks page view when component mounts
+  usePageView({
+    name: title,
+    category: category
+  });
+
+  return <div>{/* Page content */}</div>;
+}
+```
+
+## Components
+
+### TrackClick
+
+Track click events declaratively:
+
+```jsx
+import { TrackClick } from '@tracksource/react';
+
+function CTAButton() {
+  return (
+    <TrackClick event="cta_click" properties={{ location: 'header' }}>
+      <button>Get Started</button>
+    </TrackClick>
+  );
+}
+```
+
+### TrackForm
+
+Automatically track form submissions:
+
+```jsx
+import { TrackForm } from '@tracksource/react';
+
+function ContactForm() {
+  return (
+    <TrackForm
+      event="contact_form_submit"
+      includeAttribution={true}
+      onSubmit={(data) => console.log('Submitted:', data)}
+    >
+      <input type="email" name="email" required />
+      <input type="text" name="message" required />
+      <button type="submit">Send</button>
+    </TrackForm>
+  );
+}
+```
+
+## React Router Integration
+
+Track page views on route changes:
+
+```jsx
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useTracksSource } from '@tracksource/react';
+
+function PageViewTracker() {
+  const location = useLocation();
+  const { page } = useTracksSource();
+
+  useEffect(() => {
+    page({
+      path: location.pathname,
+      search: location.search
+    });
+  }, [location, page]);
+
+  return null;
+}
+
+// Add to your app
+function App() {
+  return (
+    <TracksSourceProvider tenantId="YOUR_TENANT_ID">
+      <BrowserRouter>
+        <PageViewTracker />
+        <Routes>
+          {/* Your routes */}
+        </Routes>
+      </BrowserRouter>
+    </TracksSourceProvider>
+  );
+}
+```
+
+## TypeScript Support
+
+Full TypeScript support included:
+
+```tsx
+import { useTracksSource, TrackEventProperties } from '@tracksource/react';
+
+interface PurchaseProperties extends TrackEventProperties {
+  revenue: number;
+  currency: string;
+  product_id: string;
+}
+
+function Checkout() {
+  const { track } = useTracksSource();
+
+  const handlePurchase = () => {
+    track<PurchaseProperties>('purchase', {
+      email: 'user@example.com',
+      revenue: 99.00,
+      currency: 'USD',
+      product_id: 'prod_123'
+    });
+  };
+
+  return <button onClick={handlePurchase}>Buy</button>;
+}
+```
+
+## Server Components (Next.js App Router)
+
+For React Server Components, use the client-side hooks in client components:
+
+```tsx
+// components/TrackingProvider.tsx
+'use client';
+
+import { TracksSourceProvider } from '@tracksource/react';
+
+export function TrackingProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+      {children}
+    </TracksSourceProvider>
+  );
+}
+```
+
+```tsx
+// app/layout.tsx
+import { TrackingProvider } from '@/components/TrackingProvider';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <TrackingProvider>
+          {children}
+        </TrackingProvider>
+      </body>
+    </html>
+  );
+}
+```
