@@ -1,0 +1,1231 @@
+openapi: 3.1.0
+info:
+  title: TracksSource API
+  description: |
+    TracksSource is a privacy-first attribution tracking platform that helps you understand
+    which marketing channels drive conversions and revenue.
+
+    ## Authentication
+
+    All API requests require a `X-Tenant-ID` header with your tenant identifier.
+
+    ```bash
+    curl -X GET "https://events.tracksource.io/v1/analytics/summary" \
+      -H "X-Tenant-ID: your_tenant_id"
+    ```
+  version: 1.0.0
+  contact:
+    name: TracksSource Support
+    email: support@tracksource.io
+    url: https://tracksource.io
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://events.tracksource.io
+    description: Production server
+
+security:
+  - TenantId: []
+
+tags:
+  - name: Events
+    description: Track and query events
+  - name: Leads
+    description: Lead capture and management
+  - name: Analytics
+    description: Analytics and reporting
+  - name: Attribution
+    description: Attribution data and models
+  - name: Customers
+    description: Customer profiles and segments
+
+paths:
+  /v1/track:
+    post:
+      operationId: trackEvent
+      summary: Track Event
+      description: Track a single event (page view, identify, custom event, purchase, etc.)
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackEventRequest'
+            examples:
+              pageView:
+                summary: Page View
+                value:
+                  event_type: page_view
+                  timestamp: "2024-01-15T10:30:00Z"
+                  anonymous_id: "anon_abc123"
+                  properties:
+                    url: "https://example.com/pricing"
+                    referrer: "https://google.com"
+                    title: "Pricing - Example"
+              identify:
+                summary: Identify User
+                value:
+                  event_type: identify
+                  timestamp: "2024-01-15T10:30:00Z"
+                  anonymous_id: "anon_abc123"
+                  properties:
+                    email: "user@example.com"
+                    name: "John Doe"
+                    company: "Acme Inc"
+              purchase:
+                summary: Purchase Event
+                value:
+                  event_type: purchase
+                  timestamp: "2024-01-15T10:30:00Z"
+                  anonymous_id: "anon_abc123"
+                  properties:
+                    email: "user@example.com"
+                    revenue: 99.00
+                    currency: "USD"
+                    order_id: "ORD-12345"
+      responses:
+        '200':
+          description: Event tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackEventResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/batch:
+    post:
+      operationId: batchTrackEvents
+      summary: Batch Track Events
+      description: Track multiple events in a single request (up to 100 events)
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchTrackRequest'
+      responses:
+        '200':
+          description: Events tracked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchTrackResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/events:
+    get:
+      operationId: queryEvents
+      summary: Query Events
+      description: Query events with filtering and pagination
+      tags:
+        - Events
+      parameters:
+        - name: event_type
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: Start date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: anonymous_id
+          in: query
+          description: Filter by anonymous ID
+          schema:
+            type: string
+        - name: email
+          in: query
+          description: Filter by email
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum events to return
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+
+  /v1/leads/webhook/{provider}:
+    post:
+      operationId: leadWebhook
+      summary: Universal Lead Webhook
+      description: |
+        Universal webhook endpoint that accepts leads from any form provider.
+        Automatically extracts email, phone, and custom fields.
+      tags:
+        - Leads
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          description: Form provider name (tally, typeform, hubspot, calendly, custom)
+          schema:
+            type: string
+            enum:
+              - tally
+              - typeform
+              - hubspot
+              - calendly
+              - jotform
+              - gravity
+              - custom
+        - name: ts_source
+          in: query
+          description: UTM source override
+          schema:
+            type: string
+        - name: ts_medium
+          in: query
+          description: UTM medium override
+          schema:
+            type: string
+        - name: ts_campaign
+          in: query
+          description: UTM campaign override
+          schema:
+            type: string
+        - name: ts_anon
+          in: query
+          description: Anonymous ID from client
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Form provider's webhook payload (varies by provider)
+      responses:
+        '200':
+          description: Lead captured successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadResponse'
+
+  /v1/leads:
+    get:
+      operationId: queryLeads
+      summary: Query Leads
+      description: Query captured leads with filtering and pagination
+      tags:
+        - Leads
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: source
+          in: query
+          description: Filter by UTM source
+          schema:
+            type: string
+        - name: provider
+          in: query
+          description: Filter by form provider
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Leads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadsResponse'
+
+  /v1/analytics/summary:
+    get:
+      operationId: getAnalyticsSummary
+      summary: Analytics Summary
+      description: Get high-level analytics metrics
+      tags:
+        - Analytics
+      parameters:
+        - name: period
+          in: query
+          description: Time period
+          schema:
+            type: string
+            enum:
+              - 7d
+              - 30d
+              - 90d
+            default: 30d
+      responses:
+        '200':
+          description: Summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummary'
+
+  /v1/analytics/channels:
+    get:
+      operationId: getChannelAnalytics
+      summary: Channel Analytics
+      description: Get performance metrics by marketing channel
+      tags:
+        - Analytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+      responses:
+        '200':
+          description: Channel analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelAnalytics'
+
+  /v1/analytics/timeseries:
+    get:
+      operationId: getTimeseriesAnalytics
+      summary: Timeseries Analytics
+      description: Get metrics over time
+      tags:
+        - Analytics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: interval
+          in: query
+          description: Time interval grouping
+          schema:
+            type: string
+            enum:
+              - hour
+              - day
+              - week
+            default: day
+      responses:
+        '200':
+          description: Timeseries data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeseriesAnalytics'
+
+  /v1/analytics/attribution:
+    get:
+      operationId: getAttribution
+      summary: Attribution Report
+      description: Get revenue and conversion attribution by channel
+      tags:
+        - Attribution
+      parameters:
+        - name: model
+          in: query
+          description: Attribution model
+          schema:
+            type: string
+            enum:
+              - first_touch
+              - last_touch
+              - linear
+              - time_decay
+              - position_based
+            default: linear
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: metric
+          in: query
+          description: Metric to attribute
+          schema:
+            type: string
+            enum:
+              - revenue
+              - conversions
+            default: revenue
+      responses:
+        '200':
+          description: Attribution data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributionReport'
+
+  /v1/analytics/paths:
+    get:
+      operationId: getConversionPaths
+      summary: Conversion Paths
+      description: Get common conversion paths
+      tags:
+        - Attribution
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Conversion paths retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversionPaths'
+
+  /v1/analytics/campaigns:
+    get:
+      operationId: getCampaignAnalytics
+      summary: Campaign Attribution
+      description: Get attribution by campaign
+      tags:
+        - Attribution
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+      responses:
+        '200':
+          description: Campaign analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CampaignAnalytics'
+
+  /v1/analytics/assisted:
+    get:
+      operationId: getAssistedConversions
+      summary: Assisted Conversions
+      description: Get channels that assist but don't close conversions
+      tags:
+        - Attribution
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+      responses:
+        '200':
+          description: Assisted conversion data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistedConversions'
+
+  /v1/analytics/customers:
+    get:
+      operationId: listCustomers
+      summary: List Customers
+      description: Get a list of identified customers
+      tags:
+        - Customers
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: sort
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum:
+              - last_seen
+              - first_seen
+              - total_revenue
+              - total_events
+            default: last_seen
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+      responses:
+        '200':
+          description: Customers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomersResponse'
+
+  /v1/analytics/customers/{customer_id}:
+    get:
+      operationId: getCustomer
+      summary: Get Customer Profile
+      description: Get detailed profile for a single customer
+      tags:
+        - Customers
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          description: Unified customer ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customer profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerProfile'
+        '404':
+          description: Customer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/analytics/customers/{customer_id}/events:
+    get:
+      operationId: getCustomerEvents
+      summary: Customer Events
+      description: Get events for a specific customer
+      tags:
+        - Customers
+      parameters:
+        - name: customer_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Customer events retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerEvents'
+
+  /v1/analytics/customers/search:
+    get:
+      operationId: searchCustomers
+      summary: Search Customers
+      description: Search customers by email, name, or phone
+      tags:
+        - Customers
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Search results retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSearchResults'
+
+  /v1/analytics/segments:
+    get:
+      operationId: getSegments
+      summary: Customer Segments
+      description: Get customer counts by segment
+      tags:
+        - Customers
+      responses:
+        '200':
+          description: Segments retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerSegments'
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health Check
+      description: Check API health status
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  securitySchemes:
+    TenantId:
+      type: apiKey
+      in: header
+      name: X-Tenant-ID
+      description: Your tenant identifier
+
+  schemas:
+    TrackEventRequest:
+      type: object
+      required:
+        - event_type
+        - timestamp
+      properties:
+        event_type:
+          type: string
+          description: Type of event
+          enum:
+            - page_view
+            - identify
+            - track
+            - purchase
+            - lead
+            - signup
+            - login
+          example: page_view
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp (ISO 8601)
+        anonymous_id:
+          type: string
+          description: Anonymous visitor ID
+          example: anon_abc123
+        session_id:
+          type: string
+          description: Session ID
+        source:
+          type: string
+          description: Event source
+          enum:
+            - web
+            - server
+            - mobile
+            - webhook
+          default: web
+        properties:
+          type: object
+          description: Event-specific properties
+          additionalProperties: true
+        context:
+          type: object
+          description: Context information (UTM, referrer, user agent)
+          properties:
+            utm_source:
+              type: string
+            utm_medium:
+              type: string
+            utm_campaign:
+              type: string
+            utm_term:
+              type: string
+            utm_content:
+              type: string
+            referrer:
+              type: string
+            user_agent:
+              type: string
+            ip:
+              type: string
+            page_url:
+              type: string
+
+    TrackEventResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        event_id:
+          type: string
+          example: evt_abc123xyz
+
+    BatchTrackRequest:
+      type: object
+      required:
+        - events
+      properties:
+        events:
+          type: array
+          description: Array of events to track (max 100)
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/TrackEventRequest'
+
+    BatchTrackResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        processed:
+          type: integer
+          description: Number of events processed
+        failed:
+          type: integer
+          description: Number of failed events
+        event_ids:
+          type: array
+          items:
+            type: string
+
+    EventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        event_type:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        anonymous_id:
+          type: string
+        session_id:
+          type: string
+        properties:
+          type: object
+        context:
+          type: object
+
+    LeadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        lead_id:
+          type: string
+        email:
+          type: string
+        attribution:
+          type: object
+          properties:
+            source:
+              type: string
+            medium:
+              type: string
+            campaign:
+              type: string
+
+    LeadsResponse:
+      type: object
+      properties:
+        leads:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lead'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    Lead:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+        form_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        attribution:
+          type: object
+          properties:
+            source:
+              type: string
+            medium:
+              type: string
+            campaign:
+              type: string
+        properties:
+          type: object
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        period:
+          type: string
+        metrics:
+          type: object
+          properties:
+            total_events:
+              type: integer
+            unique_visitors:
+              type: integer
+            total_sessions:
+              type: integer
+            conversions:
+              type: integer
+            conversion_rate:
+              type: number
+            total_revenue:
+              type: number
+            average_order_value:
+              type: number
+        trends:
+          type: object
+          properties:
+            events_change:
+              type: number
+            visitors_change:
+              type: number
+            conversions_change:
+              type: number
+            revenue_change:
+              type: number
+
+    ChannelAnalytics:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              visitors:
+                type: integer
+              sessions:
+                type: integer
+              conversions:
+                type: integer
+              revenue:
+                type: number
+              conversion_rate:
+                type: number
+              roas:
+                type: number
+
+    TimeseriesAnalytics:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+              events:
+                type: integer
+              visitors:
+                type: integer
+              conversions:
+                type: integer
+              revenue:
+                type: number
+
+    AttributionReport:
+      type: object
+      properties:
+        model:
+          type: string
+        period:
+          type: string
+        total_revenue:
+          type: number
+        total_conversions:
+          type: integer
+        attribution:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              source:
+                type: string
+              medium:
+                type: string
+              attributed_revenue:
+                type: number
+              attributed_conversions:
+                type: integer
+              percentage:
+                type: number
+
+    ConversionPaths:
+      type: object
+      properties:
+        paths:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: array
+                items:
+                  type: string
+              conversions:
+                type: integer
+              revenue:
+                type: number
+              percentage:
+                type: number
+        stats:
+          type: object
+          properties:
+            average_path_length:
+              type: number
+            average_days_to_convert:
+              type: number
+
+    CampaignAnalytics:
+      type: object
+      properties:
+        campaigns:
+          type: array
+          items:
+            type: object
+            properties:
+              campaign:
+                type: string
+              source:
+                type: string
+              medium:
+                type: string
+              visitors:
+                type: integer
+              conversions:
+                type: integer
+              revenue:
+                type: number
+              conversion_rate:
+                type: number
+              roas:
+                type: number
+
+    AssistedConversions:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              direct_conversions:
+                type: integer
+              assisted_conversions:
+                type: integer
+              assist_ratio:
+                type: number
+
+    CustomersResponse:
+      type: object
+      properties:
+        customers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    CustomerSummary:
+      type: object
+      properties:
+        unified_customer_id:
+          type: string
+        emails:
+          type: array
+          items:
+            type: string
+        phone:
+          type: string
+        name:
+          type: string
+        company:
+          type: string
+        first_seen:
+          type: string
+          format: date-time
+        last_seen:
+          type: string
+          format: date-time
+        total_events:
+          type: integer
+        total_sessions:
+          type: integer
+        total_revenue:
+          type: number
+        purchases:
+          type: integer
+        first_touch:
+          type: object
+          properties:
+            source:
+              type: string
+            medium:
+              type: string
+            campaign:
+              type: string
+
+    CustomerProfile:
+      type: object
+      properties:
+        customer:
+          type: object
+          properties:
+            unified_customer_id:
+              type: string
+            emails:
+              type: array
+              items:
+                type: string
+            phone:
+              type: string
+            name:
+              type: string
+            company:
+              type: string
+            timeline:
+              type: object
+              properties:
+                first_seen:
+                  type: string
+                  format: date-time
+                last_seen:
+                  type: string
+                  format: date-time
+                days_active:
+                  type: integer
+            engagement:
+              type: object
+              properties:
+                total_events:
+                  type: integer
+                total_sessions:
+                  type: integer
+                total_page_views:
+                  type: integer
+                avg_session_duration:
+                  type: number
+            revenue:
+              type: object
+              properties:
+                total_revenue:
+                  type: number
+                total_purchases:
+                  type: integer
+                average_order_value:
+                  type: number
+                last_purchase:
+                  type: string
+                  format: date-time
+            attribution:
+              type: object
+              properties:
+                first_touch:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    medium:
+                      type: string
+                    campaign:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                last_touch:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    medium:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+                touchpoints:
+                  type: integer
+
+    CustomerEvents:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              event_type:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              properties:
+                type: object
+        total:
+          type: integer
+
+    CustomerSearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              unified_customer_id:
+                type: string
+              emails:
+                type: array
+                items:
+                  type: string
+              name:
+                type: string
+              match_field:
+                type: string
+              match_score:
+                type: number
+        total:
+          type: integer
+
+    CustomerSegments:
+      type: object
+      properties:
+        segments:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              count:
+                type: integer
+              percentage:
+                type: number
+        total_customers:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: string

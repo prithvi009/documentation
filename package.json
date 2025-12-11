@@ -1,0 +1,17 @@
+{
+  "name": "tracksource-docs",
+  "version": "1.0.0",
+  "description": "TracksSource documentation powered by Mintlify",
+  "scripts": {
+    "dev": "mintlify dev",
+    "build": "mintlify build",
+    "lint": "mintlify broken-links",
+    "deploy": "mintlify deploy"
+  },
+  "devDependencies": {
+    "mintlify": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
