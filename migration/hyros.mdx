@@ -1,0 +1,251 @@
+---
+title: 'Migrate from Hyros'
+description: 'Step-by-step guide to migrate from Hyros to TracksSource'
+---
+
+# Migrating from Hyros to TracksSource
+
+This guide walks you through migrating your tracking setup from Hyros to TracksSource. TracksSource offers similar functionality with more transparent pricing, better performance, and full data ownership.
+
+## Why Migrate?
+
+| Feature | Hyros | TracksSource |
+|---------|-------|--------------|
+| **Pricing** | $199-999+/mo | $49/mo or self-hosted free |
+| **Data Ownership** | Their servers | Your database |
+| **Open Source** | No | Yes |
+| **Facebook CAPI** | Yes | Yes |
+| **Google Ads** | Yes | Yes |
+| **Multi-touch Attribution** | Yes | Yes |
+| **Real-time Tracking** | Limited | Yes |
+| **API Access** | Limited | Full access |
+
+## Migration Overview
+
+<Steps>
+  <Step title="Install TracksSource Script">
+    Replace Hyros tracking script with TracksSource
+  </Step>
+  <Step title="Update Form Integrations">
+    Redirect webhooks to TracksSource
+  </Step>
+  <Step title="Configure Ad Platform Connections">
+    Set up Facebook CAPI and Google Ads
+  </Step>
+  <Step title="Verify Tracking">
+    Test that events are flowing correctly
+  </Step>
+</Steps>
+
+## Step 1: Replace Tracking Script
+
+### Remove Hyros Script
+
+Find and remove the Hyros tracking script from your website:
+
+```html
+<!-- Remove this Hyros script -->
+<script src="https://t.hyros.com/v1/lst/universal-script?ph=YOUR_HYROS_ID"></script>
+```
+
+### Add TracksSource Script
+
+Replace it with the TracksSource tracking script:
+
+```html
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+<Note>
+  Replace `YOUR_TENANT_ID` with your TracksSource tenant ID from the dashboard.
+</Note>
+
+## Step 2: Migrate Form Integrations
+
+### Tally Forms
+
+**Hyros Webhook URL:**
+```
+https://api.hyros.com/v1/webhook/tally/YOUR_HYROS_ID
+```
+
+**TracksSource Webhook URL:**
+```
+https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
+```
+
+Update in Tally:
+1. Go to your form settings
+2. Navigate to **Integrations** > **Webhooks**
+3. Replace the Hyros URL with the TracksSource URL
+
+### Typeform
+
+**Hyros Webhook URL:**
+```
+https://api.hyros.com/v1/webhook/typeform/YOUR_HYROS_ID
+```
+
+**TracksSource Webhook URL:**
+```
+https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
+```
+
+### Calendly
+
+**Hyros Webhook URL:**
+```
+https://api.hyros.com/v1/webhook/calendly/YOUR_HYROS_ID
+```
+
+**TracksSource Webhook URL:**
+```
+https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID
+```
+
+### HubSpot
+
+**Hyros Webhook URL:**
+```
+https://api.hyros.com/v1/webhook/hubspot/YOUR_HYROS_ID
+```
+
+**TracksSource Webhook URL:**
+```
+https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
+```
+
+## Step 3: Configure Ad Platforms
+
+### Facebook Conversions API (CAPI)
+
+TracksSource supports direct Facebook CAPI integration, just like Hyros.
+
+1. Go to **Settings** > **Integrations** > **Facebook**
+2. Click **Connect Facebook**
+3. Authorize TracksSource to access your ad account
+4. Select your Pixel ID
+5. Enable server-side events
+
+<Info>
+  TracksSource sends events to Facebook in real-time, ensuring accurate attribution even with iOS 14+ restrictions.
+</Info>
+
+### Google Ads
+
+1. Go to **Settings** > **Integrations** > **Google Ads**
+2. Click **Connect Google Ads**
+3. Select your Google Ads account
+4. Enable offline conversion tracking
+
+## Step 4: Migrate Event Tracking
+
+### Hyros Event Tracking
+
+If you're using Hyros custom events:
+
+```javascript
+// Hyros way
+hyros.track('Purchase', { value: 99.99 });
+```
+
+### TracksSource Event Tracking
+
+```javascript
+// TracksSource way
+ts.track('conversion', {
+  conversion_value: 99.99,
+  currency: 'USD'
+});
+```
+
+### Event Mapping
+
+| Hyros Event | TracksSource Event |
+|-------------|-------------------|
+| `PageView` | `page_view` |
+| `Lead` | `lead` |
+| `Purchase` | `conversion` |
+| `AddToCart` | `add_to_cart` |
+| `InitiateCheckout` | `checkout_started` |
+
+## Step 5: Verify Migration
+
+### Check Events in Dashboard
+
+1. Open your TracksSource dashboard
+2. Navigate to **Analytics** > **Live Events**
+3. Verify events are coming through in real-time
+
+### Test Facebook CAPI
+
+1. Go to Facebook Events Manager
+2. Check **Test Events** tab
+3. Trigger a test conversion
+4. Verify the event appears with server-side source
+
+### Compare Attribution
+
+Run both Hyros and TracksSource in parallel for 1-2 weeks to validate attribution accuracy before fully switching.
+
+## Feature Comparison
+
+### What's the Same
+
+- Multi-touch attribution models (First Click, Last Click, Linear, Time Decay)
+- Facebook CAPI integration
+- Google Ads offline conversions
+- Form provider webhooks
+- Customer journey tracking
+
+### What's Better in TracksSource
+
+- **Real-time dashboard** - See events as they happen
+- **Full API access** - Query your data however you need
+- **Self-hosting option** - Complete data ownership
+- **Transparent pricing** - No hidden fees or usage limits
+- **Open source** - Audit the code, contribute features
+
+### What's Different
+
+- **UI Layout** - TracksSource has a more modern, streamlined interface
+- **Terminology** - "Sources" instead of "Traffic Sources"
+- **Attribution Window** - Configurable (default 30 days)
+
+## Common Migration Issues
+
+<AccordionGroup>
+  <Accordion title="Events not appearing">
+    - Verify your tenant ID is correct
+    - Check browser console for errors
+    - Ensure the script is loading before other scripts
+  </Accordion>
+
+  <Accordion title="Facebook events not sending">
+    - Reconnect your Facebook account
+    - Verify pixel ID is correct
+    - Check the Events Manager for errors
+  </Accordion>
+
+  <Accordion title="Attribution differs from Hyros">
+    - Attribution models may use slightly different algorithms
+    - Ensure attribution window matches (default 30 days)
+    - Allow 1-2 weeks of parallel tracking before comparing
+  </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+- **Email**: support@tracksource.io
+- **Discord**: [Join our community](https://discord.gg/tracksource)
+- **Documentation**: Browse the full docs
+
+<Card title="Ready to Start?" icon="rocket" href="/quickstart">
+  Follow our quickstart guide to complete your migration
+</Card>

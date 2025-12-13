@@ -62,6 +62,12 @@
       ]
     },
     {
+      "group": "Migration Guides",
+      "pages": [
+        "migration/hyros"
+      ]
+    },
+    {
       "group": "Integration",
       "pages": [
         "integration/javascript-sdk",
