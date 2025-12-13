@@ -11,23 +11,37 @@ og:description: 'Add TrackSource tracking to your website with a single script t
 
 Add the TrackSource JavaScript SDK to your website to track visitors, capture leads, and attribute conversions to marketing channels.
 
-## Quick Installation
+## Quick Installation (Recommended)
 
-Add this script to the `<head>` section of every page:
+Add this single script tag to the `<head>` section of every page:
+
+```html
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
+```
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your Tenant ID from the TrackSource dashboard (**Settings** → **General**).
+</Warning>
+
+This one-line script will:
+- Automatically track page views
+- Capture UTM parameters and click IDs (fbclid, gclid, ttclid)
+- Generate anonymous visitor IDs
+- Auto-populate Typeform and Tally hidden fields
+
+## Alternative: Async Loading
+
+For advanced users who want non-blocking async loading:
 
 ```html
 <script>
   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
   new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','tsLayer','YOUR_TENANT_ID');
 </script>
 ```
-
-<Warning>
-  Replace `YOUR_TENANT_ID` with your Tenant ID from the TrackSource dashboard (**Settings** → **General**).
-</Warning>
 
 ## Framework-Specific Installation
 
@@ -46,7 +60,7 @@ Add this script to the `<head>` section of every page:
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
         new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
         })(window,document,'script','tsLayer','YOUR_TENANT_ID');
       </script>
     </head>
@@ -80,7 +94,7 @@ Add this script to the `<head>` section of every page:
                   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
                   new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
                   j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-                  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
                   })(window,document,'script','tsLayer','${process.env.NEXT_PUBLIC_TRACKSOURCE_ID}');
                 `,
               }}
@@ -117,7 +131,7 @@ Add this script to the `<head>` section of every page:
           j=d.createElement(s),
           dl=l!='tsLayer'?'&l='+l:'';
           j.async=true;
-          j.src='https://cdn.tracksource.io/ts.js?id='+i+dl;
+          j.src='https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;
           f.parentNode.insertBefore(j,f);
         })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
       }, []);
@@ -157,7 +171,7 @@ Add this script to the `<head>` section of every page:
         j=d.createElement(s),
         dl=l!='tsLayer'?'&l='+l:'';
         j.async=true;
-        j.src='https://cdn.tracksource.io/ts.js?id='+i+dl;
+        j.src='https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;
         f.parentNode.insertBefore(j,f);
       })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
     })
@@ -197,7 +211,7 @@ Add this script to the `<head>` section of every page:
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
       new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','tsLayer','YOUR_TENANT_ID');
     </script>
     ```
@@ -224,7 +238,7 @@ Add this script to the `<head>` section of every page:
       (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
       new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
       })(window,document,'script','tsLayer','YOUR_TENANT_ID');
     </script>
     ```
@@ -328,7 +342,7 @@ If you have multiple domains pointing to the same site:
   (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
   new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
   j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
   })(window,document,'script','tsLayer','YOUR_TENANT_ID');
 
   // Set cookie domain for cross-subdomain tracking
