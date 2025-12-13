@@ -15,6 +15,15 @@
       "to": "#8B5CF6"
     }
   },
+  "metadata": {
+    "og:site_name": "TrackSource Documentation",
+    "og:image": "https://tracksource.io/og-docs.png",
+    "twitter:card": "summary_large_image",
+    "twitter:site": "@tracksource"
+  },
+  "seo": {
+    "indexHiddenPages": false
+  },
   "topbarLinks": [
     {
       "name": "Support",
