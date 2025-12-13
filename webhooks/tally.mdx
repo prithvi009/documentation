@@ -1,0 +1,209 @@
+---
+title: 'Tally Forms Integration - Track Leads with TrackSource'
+sidebarTitle: 'Tally'
+description: 'Connect Tally forms to TrackSource for automatic lead tracking and attribution. Step-by-step setup guide with hidden field configuration.'
+icon: 'square-check'
+og:title: 'Tally Forms + TrackSource Integration'
+og:description: 'Capture Tally form submissions and attribute them to the right marketing channels. 2-minute setup.'
+---
+
+# Tally Forms Integration
+
+Connect your Tally forms to TrackSource to automatically capture leads and attribute them to the correct marketing channels.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Open Your Tally Form">
+    Go to [tally.so](https://tally.so) and open the form you want to connect
+  </Step>
+  <Step title="Navigate to Integrations">
+    Click on **Integrations** in the form editor
+  </Step>
+  <Step title="Add Webhook">
+    Click **Connect** next to **Webhooks**
+  </Step>
+  <Step title="Enter Webhook URL">
+    Paste your TrackSource webhook URL:
+    ```
+    https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
+    ```
+  </Step>
+  <Step title="Save">
+    Click **Save** to activate the webhook
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Add Hidden Field (Recommended)
+
+For 100% accurate attribution, add a hidden field that captures the visitor's TrackSource ID.
+
+### Step 1: Add Hidden Field Block
+
+1. In your Tally form editor, click **+** to add a block
+2. Select **Hidden fields**
+3. Add a field named `ts_anonymous_id`
+
+### Step 2: Enable Auto-Population
+
+The TrackSource script automatically detects hidden fields named `ts_anonymous_id` and populates them with the visitor's anonymous ID.
+
+<Info>
+  Make sure the TrackSource tracking script is installed on the same page as your Tally form.
+</Info>
+
+## Payload Example
+
+When a form is submitted, TrackSource receives this payload from Tally:
+
+```json
+{
+  "eventId": "abc123",
+  "eventType": "FORM_RESPONSE",
+  "createdAt": "2024-01-15T10:30:00.000Z",
+  "data": {
+    "responseId": "resp_xyz",
+    "formId": "form_123",
+    "formName": "Contact Form",
+    "fields": [
+      {
+        "key": "question_email",
+        "label": "Email",
+        "type": "INPUT_EMAIL",
+        "value": "john@example.com"
+      },
+      {
+        "key": "question_name",
+        "label": "Name",
+        "type": "INPUT_TEXT",
+        "value": "John Doe"
+      },
+      {
+        "key": "ts_anonymous_id",
+        "label": "ts_anonymous_id",
+        "type": "HIDDEN_FIELDS",
+        "value": "anon_abc123xyz"
+      }
+    ]
+  }
+}
+```
+
+## Field Mapping
+
+TrackSource automatically maps these Tally field types:
+
+| Tally Field Type | TrackSource Field |
+|-----------------|-------------------|
+| `INPUT_EMAIL` | `email` |
+| `INPUT_PHONE_NUMBER` | `phone` |
+| `INPUT_TEXT` (name/full name) | `name` |
+| `HIDDEN_FIELDS` (ts_anonymous_id) | `anonymous_id` |
+
+## Multi-Step Forms
+
+For multi-step Tally forms, the webhook fires only when the form is fully completed. The hidden field value persists across all steps.
+
+## Embedding Tally Forms
+
+When embedding Tally forms on your website, ensure the TrackSource script loads before the Tally embed:
+
+```html
+<!-- TrackSource Script (load first) -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+
+<!-- Tally Embed (load after) -->
+<iframe
+  data-tally-src="https://tally.so/embed/YOUR_FORM_ID?hideTitle=1"
+  loading="lazy"
+  width="100%"
+  height="500"
+  frameborder="0"
+  title="Contact Form"
+></iframe>
+<script>
+  var d=document,w="https://tally.so/widgets/embed.js",
+  v=function(){"undefined"!=typeof Tally?
+  Tally.loadEmbeds():d.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(function(e){e.src=e.dataset.tallySrc})};
+  if("undefined"!=typeof Tally)v();
+  else if(d.querySelector('script[src="'+w+'"]')==null){var s=d.createElement("script");
+  s.src=w;s.onload=v;s.onerror=v;d.body.appendChild(s);}
+</script>
+```
+
+## Testing Your Integration
+
+1. **Submit a test response** to your Tally form
+2. **Check Tally's webhook logs**: Settings → Integrations → Webhooks → View deliveries
+3. **View in TrackSource**: Go to Analytics → Live Events
+
+<Accordion title="Webhook delivery failed">
+  If Tally shows a failed delivery:
+  1. Verify your Tenant ID is correct
+  2. Ensure the webhook URL has no typos
+  3. Check if TrackSource services are operational
+  4. Try redelivering the webhook from Tally's logs
+</Accordion>
+
+## Example Use Cases
+
+### Lead Generation Form
+
+```
+Form Fields:
+- Email (required)
+- Name
+- Company
+- Phone
+- ts_anonymous_id (hidden)
+
+→ TrackSource captures lead with full attribution
+→ Lead appears in Customers list
+→ Attribution shows which ad/campaign drove the lead
+```
+
+### Contact Form
+
+```
+Form Fields:
+- Email (required)
+- Subject
+- Message
+- ts_anonymous_id (hidden)
+
+→ Contact tracked as lead event
+→ Can filter by form in analytics
+```
+
+### Quiz/Survey
+
+```
+Form Fields:
+- Email (at end)
+- Quiz answers
+- ts_anonymous_id (hidden)
+
+→ Lead captured when quiz completed
+→ Quiz answers stored in event properties
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="View Leads" icon="users" href="/api-reference/leads/query">
+    Query leads via the API
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send leads to Facebook for optimization
+  </Card>
+</CardGroup>

@@ -1,0 +1,331 @@
+---
+title: 'Payment Gateway Integration - Track Revenue with TrackSource'
+sidebarTitle: 'Overview'
+description: 'Connect Stripe, Whop, and other payment providers to TrackSource. Track revenue, attribute purchases to marketing channels, and calculate true ROI.'
+icon: 'credit-card'
+og:title: 'Payment Tracking | TrackSource Attribution'
+og:description: 'Attribute revenue to marketing channels. Connect Stripe, Whop, and other payment providers for complete ROI tracking.'
+---
+
+# Payment Gateway Integration
+
+Connect your payment provider to TrackSource to track revenue and attribute purchases to the marketing channels that drove them. See your true return on ad spend (ROAS) for every campaign.
+
+## Why Track Payments?
+
+Without payment tracking, you only know:
+- Which ads drove leads
+- Cost per lead
+
+With payment tracking, you know:
+- Which ads drove **revenue**
+- Actual ROAS per campaign
+- Customer lifetime value by source
+- True cost per acquisition
+
+```
+Without Payments              With Payments
+────────────────              ─────────────
+Lead from Facebook            Lead from Facebook
+Cost: $50                     Cost: $50
+Value: ???                    Value: $997
+
+                              ROAS: 19.9x
+```
+
+## Supported Payment Providers
+
+<CardGroup cols={2}>
+  <Card title="Stripe" icon="stripe" href="/payments/stripe">
+    Credit cards, subscriptions, invoices. The most popular payment processor.
+  </Card>
+  <Card title="Whop" icon="credit-card" href="/payments/whop">
+    Digital products, memberships, courses. Popular for creators.
+  </Card>
+</CardGroup>
+
+## How It Works
+
+```
+Customer Journey                        TrackSource
+─────────────────                       ───────────
+1. Clicks Facebook Ad    ──────────────▶  Tracks UTM, fbp, fbc
+2. Visits landing page   ──────────────▶  Assigns anonymous ID
+3. Submits lead form     ──────────────▶  Links email to journey
+4. Receives email        ──────────────▶  (continues tracking)
+5. Makes purchase        ──────────────▶  Webhook receives payment
+6. Revenue attributed    ──────────────▶  Facebook credited
+
+                         Dashboard shows: "Facebook drove $997 revenue"
+```
+
+## Integration Methods
+
+### Method 1: Webhook (Recommended)
+
+Payment providers send purchase data directly to TrackSource when a transaction occurs.
+
+```
+Payment Provider → Webhook → TrackSource → Attribution
+```
+
+**Pros:**
+- Real-time tracking
+- No code changes needed
+- Works with any checkout
+
+**Cons:**
+- Requires webhook configuration
+- May need webhook secret validation
+
+### Method 2: API Integration
+
+Send purchase events to TrackSource using the API.
+
+```
+Your Backend → TrackSource API → Attribution
+```
+
+**Pros:**
+- Full control over data
+- Can include custom metadata
+- Works even without webhooks
+
+**Cons:**
+- Requires backend code changes
+- Need to handle retries
+
+### Method 3: JavaScript SDK
+
+Track purchases client-side using the TrackSource SDK.
+
+```
+Checkout Page → ts.track('conversion') → Attribution
+```
+
+**Pros:**
+- Simple implementation
+- No backend changes
+
+**Cons:**
+- Can be blocked by ad blockers
+- Less reliable than server-side
+
+## Webhook Endpoints
+
+Each payment provider has a dedicated webhook endpoint:
+
+| Provider | Webhook URL |
+|----------|-------------|
+| Stripe | `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID` |
+| Whop | `https://events.tracksource.io/webhooks/whop/YOUR_TENANT_ID` |
+
+## Customer Matching
+
+TrackSource matches purchases to existing leads using:
+
+1. **Email** (primary) - Same email in lead form and purchase
+2. **Phone** - Phone number matching
+3. **Customer ID** - Your internal customer identifier
+4. **TrackSource ID** - If passed through checkout
+
+### Match Priority
+
+```
+1. ts_anonymous_id    →  100% match (deterministic)
+2. email              →  99% match
+3. phone              →  95% match
+4. customer_id        →  100% match (if previously linked)
+```
+
+## Revenue Events
+
+When a purchase occurs, TrackSource creates a `conversion` event:
+
+```json
+{
+  "event_type": "conversion",
+  "user_id": "cust_123",
+  "properties": {
+    "email": "john@example.com",
+    "conversion_value": 997.00,
+    "currency": "USD",
+    "order_id": "ord_abc123",
+    "product_name": "Premium Course",
+    "payment_provider": "stripe"
+  },
+  "attribution": {
+    "first_touch": {
+      "source": "facebook",
+      "medium": "paid",
+      "campaign": "winter_sale"
+    },
+    "last_touch": {
+      "source": "email",
+      "medium": "newsletter"
+    }
+  }
+}
+```
+
+## Attribution Models for Revenue
+
+<Tabs>
+  <Tab title="First Touch">
+    **100% credit to first interaction**
+
+    Best for: Understanding which channels bring in customers
+
+    ```
+    Customer Journey:
+    Facebook Ad → Google Search → Email → Purchase ($997)
+
+    Attribution:
+    Facebook: $997 (100%)
+    Google: $0
+    Email: $0
+    ```
+  </Tab>
+  <Tab title="Last Touch">
+    **100% credit to last interaction**
+
+    Best for: Understanding which channels close sales
+
+    ```
+    Customer Journey:
+    Facebook Ad → Google Search → Email → Purchase ($997)
+
+    Attribution:
+    Facebook: $0
+    Google: $0
+    Email: $997 (100%)
+    ```
+  </Tab>
+  <Tab title="Linear">
+    **Equal credit to all touchpoints**
+
+    Best for: Balanced view of the funnel
+
+    ```
+    Customer Journey:
+    Facebook Ad → Google Search → Email → Purchase ($997)
+
+    Attribution:
+    Facebook: $332.33 (33.3%)
+    Google: $332.33 (33.3%)
+    Email: $332.34 (33.3%)
+    ```
+  </Tab>
+</Tabs>
+
+## Viewing Revenue Data
+
+### Dashboard
+
+Go to **Analytics** → **Revenue** to see:
+
+- Total revenue by time period
+- Revenue by source/medium/campaign
+- ROAS by channel
+- Top converting campaigns
+
+### API
+
+Query revenue data via the API:
+
+```bash
+curl -X GET "https://events.tracksource.io/v1/analytics/revenue" \
+  -H "X-Tenant-ID: YOUR_TENANT_ID" \
+  -H "Content-Type: application/json"
+```
+
+## Multi-Currency Support
+
+TrackSource normalizes all currencies to USD for reporting. The original currency is preserved in the event properties.
+
+```json
+{
+  "conversion_value": 997.00,
+  "currency": "EUR",
+  "conversion_value_usd": 1086.73
+}
+```
+
+## Subscription Tracking
+
+For subscription products, TrackSource tracks:
+
+- **Initial purchase** - First payment
+- **Recurring payments** - Ongoing revenue
+- **Upgrades/Downgrades** - Plan changes
+- **Cancellations** - Churn events
+
+```
+Subscription Timeline
+─────────────────────
+Day 1:   Initial purchase ($49/mo)    → conversion event
+Day 30:  Renewal ($49/mo)             → recurring_payment event
+Day 45:  Upgrade to Pro ($99/mo)      → upgrade event
+Day 60:  Renewal ($99/mo)             → recurring_payment event
+```
+
+## Refund Handling
+
+When a refund occurs, TrackSource:
+
+1. Creates a `refund` event
+2. Adjusts the customer's lifetime value
+3. Updates attribution reports
+
+Refunds are shown separately from revenue, not subtracted.
+
+## Testing Payment Integration
+
+### Test Mode
+
+Most payment providers have a test/sandbox mode. Use test credentials to verify:
+
+1. Webhook delivery works
+2. Customer matching succeeds
+3. Revenue appears in dashboard
+
+### Test Cards
+
+| Provider | Test Card |
+|----------|-----------|
+| Stripe | 4242 4242 4242 4242 |
+| Whop | Use sandbox mode |
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Purchases not appearing">
+    1. Verify webhook URL is correct
+    2. Check payment provider's webhook logs
+    3. Ensure webhook events are enabled
+    4. Test with a sandbox transaction
+  </Accordion>
+
+  <Accordion title="Purchase not attributed to lead">
+    1. Verify the email matches between lead and purchase
+    2. Check if the lead was captured before the purchase
+    3. Look at the event timeline in customer profile
+  </Accordion>
+
+  <Accordion title="Revenue shows $0">
+    1. Verify the webhook payload includes amount
+    2. Check currency is supported
+    3. Look for parsing errors in event properties
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Connect Stripe" icon="stripe" href="/payments/stripe">
+    Set up Stripe webhooks for payment tracking
+  </Card>
+  <Card title="Connect Whop" icon="credit-card" href="/payments/whop">
+    Track digital product sales from Whop
+  </Card>
+</CardGroup>

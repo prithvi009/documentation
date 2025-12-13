@@ -1,0 +1,406 @@
+---
+title: 'Stripe Integration - Track Payments with TrackSource'
+sidebarTitle: 'Stripe'
+description: 'Connect Stripe to TrackSource to track purchases, subscriptions, and revenue. Attribute payments to marketing channels and calculate true ROAS.'
+icon: 'stripe'
+og:title: 'Stripe + TrackSource Integration'
+og:description: 'Track Stripe payments and attribute them to marketing channels. Complete webhook setup guide.'
+---
+
+# Stripe Integration
+
+Connect Stripe to TrackSource to automatically track purchases, subscriptions, and revenue. Attribute every payment to the marketing channel that drove it.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Open Stripe Dashboard">
+    Go to [dashboard.stripe.com](https://dashboard.stripe.com) and sign in
+  </Step>
+  <Step title="Navigate to Webhooks">
+    Go to **Developers** → **Webhooks**
+  </Step>
+  <Step title="Add Endpoint">
+    Click **Add endpoint**
+  </Step>
+  <Step title="Configure Endpoint">
+    - **Endpoint URL**:
+    ```
+    https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID
+    ```
+    - **Events to send**: Select the events listed below
+  </Step>
+  <Step title="Add Endpoint">
+    Click **Add endpoint** to save
+  </Step>
+  <Step title="Copy Signing Secret">
+    After creating, click on the endpoint and copy the **Signing secret**. You'll need this for validation.
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Events to Subscribe
+
+Select these events for complete tracking:
+
+### Required Events
+
+| Event | When It Fires | Use Case |
+|-------|--------------|----------|
+| `checkout.session.completed` | Checkout payment succeeds | Track one-time and first subscription payments |
+| `payment_intent.succeeded` | Payment succeeds | Track all successful payments |
+
+### Recommended Events
+
+| Event | When It Fires | Use Case |
+|-------|--------------|----------|
+| `invoice.paid` | Subscription renewal | Track recurring payments |
+| `customer.subscription.created` | New subscription | Track subscription starts |
+| `customer.subscription.updated` | Plan change | Track upgrades/downgrades |
+| `customer.subscription.deleted` | Cancellation | Track churn |
+| `charge.refunded` | Refund issued | Track refunds |
+
+## Linking Customers
+
+For accurate attribution, link Stripe customers to their TrackSource journey.
+
+### Method 1: Checkout Session Metadata
+
+When creating a Stripe Checkout session, include the TrackSource anonymous ID:
+
+```javascript
+const session = await stripe.checkout.sessions.create({
+  mode: 'payment',
+  line_items: [...],
+  success_url: 'https://yoursite.com/success',
+  cancel_url: 'https://yoursite.com/cancel',
+  metadata: {
+    ts_anonymous_id: req.body.ts_anonymous_id
+  }
+});
+```
+
+### Method 2: Client Reference ID
+
+Pass the anonymous ID as the client reference ID:
+
+```javascript
+const session = await stripe.checkout.sessions.create({
+  mode: 'subscription',
+  line_items: [...],
+  client_reference_id: req.body.ts_anonymous_id,
+  success_url: 'https://yoursite.com/success',
+  cancel_url: 'https://yoursite.com/cancel'
+});
+```
+
+### Method 3: Customer Metadata
+
+When creating a Stripe customer, add the TrackSource ID:
+
+```javascript
+const customer = await stripe.customers.create({
+  email: 'john@example.com',
+  metadata: {
+    ts_anonymous_id: req.body.ts_anonymous_id
+  }
+});
+```
+
+## Checkout Page Integration
+
+### Stripe Checkout (Hosted)
+
+```javascript
+// Frontend: Get TrackSource ID before redirecting to Stripe
+const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id || '';
+
+// Send to your backend
+const response = await fetch('/api/create-checkout', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    priceId: 'price_xxx',
+    ts_anonymous_id: tsAnonymousId
+  })
+});
+
+const { url } = await response.json();
+window.location.href = url;
+```
+
+```javascript
+// Backend: Create checkout session with metadata
+app.post('/api/create-checkout', async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    mode: 'payment',
+    line_items: [{ price: req.body.priceId, quantity: 1 }],
+    success_url: 'https://yoursite.com/success',
+    cancel_url: 'https://yoursite.com/cancel',
+    metadata: {
+      ts_anonymous_id: req.body.ts_anonymous_id
+    }
+  });
+
+  res.json({ url: session.url });
+});
+```
+
+### Stripe Elements (Embedded)
+
+```javascript
+// When payment succeeds, also track with TrackSource SDK
+const { error, paymentIntent } = await stripe.confirmPayment({...});
+
+if (!error && paymentIntent.status === 'succeeded') {
+  // Track client-side as backup
+  ts.track('conversion', {
+    conversion_value: paymentIntent.amount / 100,
+    currency: paymentIntent.currency.toUpperCase(),
+    order_id: paymentIntent.id
+  });
+}
+```
+
+## Payload Example
+
+When a checkout completes, TrackSource receives:
+
+```json
+{
+  "id": "evt_xxx",
+  "type": "checkout.session.completed",
+  "data": {
+    "object": {
+      "id": "cs_xxx",
+      "customer": "cus_xxx",
+      "customer_email": "john@example.com",
+      "amount_total": 99700,
+      "currency": "usd",
+      "payment_status": "paid",
+      "metadata": {
+        "ts_anonymous_id": "anon_abc123xyz"
+      },
+      "line_items": {
+        "data": [
+          {
+            "description": "Premium Course",
+            "amount_total": 99700,
+            "quantity": 1
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+## Subscription Tracking
+
+For subscription businesses, TrackSource tracks the full customer lifecycle:
+
+### Initial Purchase
+
+```
+Event: checkout.session.completed (mode: subscription)
+→ Creates conversion event with first payment amount
+→ Links customer to marketing source
+```
+
+### Recurring Payments
+
+```
+Event: invoice.paid
+→ Creates recurring_payment event
+→ Adds to customer lifetime value
+→ Maintains original attribution
+```
+
+### Upgrades/Downgrades
+
+```
+Event: customer.subscription.updated
+→ Creates upgrade or downgrade event
+→ Tracks plan change
+→ Updates MRR metrics
+```
+
+### Cancellations
+
+```
+Event: customer.subscription.deleted
+→ Creates churn event
+→ Marks subscription as ended
+→ Preserves historical attribution
+```
+
+## Customer Lifetime Value
+
+TrackSource automatically calculates CLV by summing all payments:
+
+```
+Customer: john@example.com
+────────────────────────────
+Initial purchase:    $997
+Month 2 renewal:     $99
+Month 3 renewal:     $99
+Upgrade:             +$50
+Month 4 renewal:     $149
+────────────────────────────
+Lifetime Value:      $1,394
+```
+
+## Webhook Security
+
+Verify Stripe webhook signatures to ensure requests are authentic:
+
+<Info>
+  TrackSource automatically verifies Stripe webhook signatures. You don't need to configure anything additional.
+</Info>
+
+If you're forwarding webhooks through your own backend:
+
+```javascript
+const endpointSecret = 'whsec_xxx';
+
+app.post('/stripe-webhook', (req, res) => {
+  const sig = req.headers['stripe-signature'];
+
+  try {
+    const event = stripe.webhooks.constructEvent(
+      req.rawBody,
+      sig,
+      endpointSecret
+    );
+
+    // Forward to TrackSource
+    fetch('https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Stripe-Signature': sig
+      },
+      body: req.rawBody
+    });
+
+    res.json({ received: true });
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+});
+```
+
+## Testing with Stripe CLI
+
+Use the Stripe CLI to test webhooks locally:
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Login
+stripe login
+
+# Forward events to TrackSource
+stripe listen --forward-to https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID
+
+# Trigger test events
+stripe trigger checkout.session.completed
+```
+
+## Test Mode
+
+When testing, use Stripe's test mode:
+
+1. Toggle to **Test mode** in Stripe dashboard
+2. Use test card: `4242 4242 4242 4242`
+3. Any future expiry date and any CVC
+4. Webhooks will still fire to your endpoint
+
+<Note>
+  TrackSource processes test mode events the same as live events. Use a separate Tenant ID for testing if needed.
+</Note>
+
+## Multi-Currency Support
+
+TrackSource handles multi-currency payments:
+
+```json
+{
+  "conversion_value": 997.00,
+  "currency": "EUR",
+  "conversion_value_usd": 1086.73,
+  "exchange_rate": 1.09
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhook not receiving events">
+    1. Check Stripe webhook logs: Developers → Webhooks → Select endpoint → View logs
+    2. Verify endpoint URL is correct
+    3. Ensure you selected the right events
+    4. Check if endpoint is disabled
+  </Accordion>
+
+  <Accordion title="Payment not attributed to lead">
+    1. Ensure the customer email matches the lead email
+    2. Verify ts_anonymous_id is passed in metadata
+    3. Check the customer was captured as a lead before purchase
+    4. Look at event timeline in TrackSource
+  </Accordion>
+
+  <Accordion title="Duplicate payments">
+    TrackSource deduplicates by payment_intent ID. If seeing duplicates:
+    1. Check if you have multiple webhook endpoints
+    2. Verify you're not also tracking client-side
+    3. Look for retry deliveries in Stripe logs
+  </Accordion>
+
+  <Accordion title="Wrong amount showing">
+    1. Stripe sends amounts in cents (99700 = $997.00)
+    2. TrackSource automatically converts to dollars
+    3. Check currency is being passed correctly
+  </Accordion>
+</AccordionGroup>
+
+## API Integration Alternative
+
+If you can't use webhooks, send purchase events via API:
+
+```javascript
+// After successful Stripe payment
+await fetch('https://events.tracksource.io/v1/events', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Tenant-ID': 'YOUR_TENANT_ID'
+  },
+  body: JSON.stringify({
+    event_type: 'conversion',
+    user_id: customer.email,
+    properties: {
+      email: customer.email,
+      conversion_value: paymentIntent.amount / 100,
+      currency: paymentIntent.currency.toUpperCase(),
+      order_id: paymentIntent.id,
+      payment_provider: 'stripe'
+    }
+  })
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="View Revenue Analytics" icon="chart-line" href="/api-reference/analytics/overview">
+    Query revenue data via API
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send purchases to Facebook for optimization
+  </Card>
+</CardGroup>

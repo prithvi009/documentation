@@ -1,0 +1,187 @@
+---
+title: 'Form Provider Webhooks - Connect Any Form to TrackSource'
+sidebarTitle: 'Overview'
+description: 'Connect Tally, Typeform, Calendly, HubSpot, and custom forms to TrackSource. Automatic lead capture with full attribution tracking.'
+icon: 'webhook'
+og:title: 'Form Webhooks | TrackSource Attribution'
+og:description: 'One webhook URL works with any form provider. Automatically capture leads and attribute them to the right marketing channels.'
+---
+
+# Form Provider Webhooks
+
+TrackSource provides universal webhooks that work with any form provider. When a visitor submits a form, the webhook captures their information and links it to their browsing history for accurate attribution.
+
+## How It Works
+
+```
+Visitor Journey                          TrackSource
+─────────────────                        ───────────
+1. Clicks Facebook Ad    ──────────────▶  Tracks UTM, fbp, fbc
+2. Visits landing page   ──────────────▶  Assigns anonymous ID
+3. Browses your site     ──────────────▶  Records page views
+4. Submits form          ──────────────▶  Webhook receives data
+5. Becomes lead          ──────────────▶  Links to journey
+                                          ↓
+                         Attribution complete: Facebook gets credit
+```
+
+## Universal Webhook URL
+
+All webhooks follow this pattern:
+
+```
+https://events.tracksource.io/webhooks/{provider}/YOUR_TENANT_ID
+```
+
+Replace `{provider}` with your form provider name and `YOUR_TENANT_ID` with your Tenant ID.
+
+## Supported Providers
+
+<CardGroup cols={2}>
+  <Card title="Tally" icon="square-check" href="/webhooks/tally">
+    Free-form builder with native webhook support. Best for simple forms.
+  </Card>
+  <Card title="Typeform" icon="t" href="/webhooks/typeform">
+    Conversational forms with advanced logic. Great for surveys and quizzes.
+  </Card>
+  <Card title="Calendly" icon="calendar" href="/webhooks/calendly">
+    Scheduling tool for booking calls and meetings.
+  </Card>
+  <Card title="HubSpot" icon="hubspot" href="/webhooks/hubspot">
+    CRM forms with marketing automation.
+  </Card>
+  <Card title="Custom Forms" icon="code" href="/webhooks/custom-forms">
+    Any form that can send HTTP POST requests.
+  </Card>
+</CardGroup>
+
+## Webhook Payload
+
+When a form is submitted, TrackSource receives a webhook payload containing:
+
+### Standard Fields
+
+| Field | Description |
+|-------|-------------|
+| `email` | Visitor's email address (required) |
+| `name` | Full name or first/last name |
+| `phone` | Phone number for identity resolution |
+| `ts_anonymous_id` | TrackSource anonymous ID (recommended) |
+
+### Automatic Enrichment
+
+TrackSource automatically enriches each lead with:
+
+- **UTM Parameters**: source, medium, campaign, content, term
+- **Click IDs**: fbclid, gclid, ttclid, li_fat_id
+- **Browser IDs**: fbp (Facebook), _ga (Google Analytics)
+- **Referrer**: Original traffic source
+- **Landing Page**: First page visited
+- **Device Info**: Browser, OS, device type
+
+## Hidden Field Setup
+
+For best attribution accuracy, add a hidden field to your forms that captures the TrackSource anonymous ID.
+
+### Field Configuration
+
+| Provider | Field Name | Field Type |
+|----------|------------|------------|
+| Tally | `ts_anonymous_id` | Hidden |
+| Typeform | `ts_anonymous_id` | Hidden |
+| HubSpot | `ts_anonymous_id` | Hidden single-line text |
+| Custom | `ts_anonymous_id` | `<input type="hidden">` |
+
+### Why Hidden Fields Matter
+
+Without the hidden field, TrackSource uses probabilistic matching (email, IP, user agent) which is ~85% accurate. With the hidden field, matching is 100% deterministic.
+
+```
+Without Hidden Field                 With Hidden Field
+────────────────────                 ─────────────────
+Email: john@email.com               Email: john@email.com
+IP: 192.168.1.1                     Anonymous ID: anon_abc123
+User Agent: Chrome/120                    ↓
+       ↓                             100% Match
+Probabilistic Match (~85%)
+```
+
+## Testing Webhooks
+
+### 1. Use the Test Endpoint
+
+Send a test payload to verify your webhook is configured correctly:
+
+```bash
+curl -X POST https://events.tracksource.io/webhooks/test/YOUR_TENANT_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "name": "Test User",
+    "ts_anonymous_id": "anon_test123"
+  }'
+```
+
+### 2. Check Your Dashboard
+
+1. Go to **Analytics** → **Live Events**
+2. Look for the `lead` event
+3. Click on it to see the full payload and attribution data
+
+### 3. Verify in Form Provider
+
+Most form providers show webhook delivery status:
+
+- **Tally**: Settings → Integrations → Webhooks → Delivery History
+- **Typeform**: Connect → Webhooks → Delivery Logs
+- **Calendly**: Integrations → Webhooks → Event Log
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhook not receiving data">
+    1. Verify the webhook URL is correct (check for typos)
+    2. Ensure your Tenant ID is valid
+    3. Check if your form provider shows delivery errors
+    4. Try the test endpoint with curl
+  </Accordion>
+
+  <Accordion title="Lead not linked to journey">
+    1. Add the `ts_anonymous_id` hidden field to your form
+    2. Ensure the TrackSource script is loaded before form submission
+    3. Check that the visitor has cookies enabled
+  </Accordion>
+
+  <Accordion title="Duplicate leads">
+    TrackSource deduplicates leads by email within a 5-minute window. If you're seeing duplicates:
+    1. Check if your form is submitting multiple times
+    2. Verify you don't have multiple webhooks configured
+  </Accordion>
+
+  <Accordion title="Missing attribution data">
+    Attribution data comes from the visitor's browsing session. If missing:
+    1. Verify the tracking script is installed on all pages
+    2. Check that the form is on the same domain as the tracking script
+    3. Ensure cookies are not being blocked
+  </Accordion>
+</AccordionGroup>
+
+## Security
+
+All webhooks are:
+
+- **Encrypted**: HTTPS only, TLS 1.2+
+- **Validated**: Signature verification for supported providers
+- **Rate Limited**: 100 requests per second per tenant
+- **Logged**: Full audit trail available
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Set Up Tally" icon="square-check" href="/webhooks/tally">
+    Connect Tally forms in 2 minutes
+  </Card>
+  <Card title="Track Payments" icon="credit-card" href="/payments/overview">
+    Capture revenue with Stripe and Whop webhooks
+  </Card>
+</CardGroup>

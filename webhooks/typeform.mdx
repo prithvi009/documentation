@@ -1,0 +1,243 @@
+---
+title: 'Typeform Integration - Track Leads with TrackSource'
+sidebarTitle: 'Typeform'
+description: 'Connect Typeform to TrackSource for automatic lead tracking and multi-touch attribution. Complete setup guide with hidden field configuration.'
+icon: 't'
+og:title: 'Typeform + TrackSource Integration'
+og:description: 'Capture Typeform submissions and attribute them to the right marketing channels. Full setup guide.'
+---
+
+# Typeform Integration
+
+Connect your Typeform forms to TrackSource to automatically capture leads and attribute them to the correct marketing channels.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Open Your Typeform">
+    Go to [typeform.com](https://typeform.com) and open the form you want to connect
+  </Step>
+  <Step title="Go to Connect">
+    Click on **Connect** in the top navigation
+  </Step>
+  <Step title="Select Webhooks">
+    Find **Webhooks** in the integrations list and click it
+  </Step>
+  <Step title="Add Webhook">
+    Click **Add a webhook**
+  </Step>
+  <Step title="Enter Webhook URL">
+    Paste your TrackSource webhook URL:
+    ```
+    https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
+    ```
+  </Step>
+  <Step title="Save and Enable">
+    Click **Save** and ensure the toggle is enabled
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Add Hidden Field (Recommended)
+
+For 100% accurate attribution, add a hidden field that captures the visitor's TrackSource ID.
+
+### Step 1: Add Hidden Field
+
+1. In your Typeform editor, click **+** to add a question
+2. Search for **Hidden Fields**
+3. Add a field named `ts_anonymous_id`
+
+### Step 2: Pass the Value via URL
+
+When embedding or linking to your Typeform, include the anonymous ID as a URL parameter:
+
+```
+https://yourname.typeform.com/to/FORM_ID?ts_anonymous_id={{ts_anonymous_id}}
+```
+
+### Auto-Population Script
+
+Add this script to pages with Typeform embeds:
+
+```html
+<script>
+  // Get TrackSource anonymous ID
+  function getTsAnonymousId() {
+    const tsLayer = window.tsLayer || [];
+    const entry = tsLayer.find(e => e.anonymous_id);
+    return entry ? entry.anonymous_id : '';
+  }
+
+  // Update Typeform URLs with anonymous ID
+  document.querySelectorAll('a[href*="typeform.com"]').forEach(link => {
+    const url = new URL(link.href);
+    url.searchParams.set('ts_anonymous_id', getTsAnonymousId());
+    link.href = url.toString();
+  });
+</script>
+```
+
+## Payload Example
+
+When a form is submitted, TrackSource receives this payload from Typeform:
+
+```json
+{
+  "event_id": "abc123",
+  "event_type": "form_response",
+  "form_response": {
+    "form_id": "FORM_ID",
+    "token": "response_token",
+    "submitted_at": "2024-01-15T10:30:00Z",
+    "definition": {
+      "title": "Contact Form",
+      "fields": [
+        {
+          "id": "email_field",
+          "title": "Email",
+          "type": "email"
+        }
+      ]
+    },
+    "answers": [
+      {
+        "field": {
+          "id": "email_field",
+          "type": "email"
+        },
+        "type": "email",
+        "email": "john@example.com"
+      }
+    ],
+    "hidden": {
+      "ts_anonymous_id": "anon_abc123xyz"
+    }
+  }
+}
+```
+
+## Field Mapping
+
+TrackSource automatically maps these Typeform field types:
+
+| Typeform Field Type | TrackSource Field |
+|--------------------|-------------------|
+| `email` | `email` |
+| `phone_number` | `phone` |
+| `short_text` (name) | `name` |
+| Hidden fields (`ts_anonymous_id`) | `anonymous_id` |
+
+## Embedding Typeform
+
+### Standard Embed
+
+```html
+<div data-tf-widget="FORM_ID" data-tf-hidden="ts_anonymous_id="></div>
+<script src="//embed.typeform.com/next/embed.js"></script>
+<script>
+  // Set hidden field value after TrackSource loads
+  window.addEventListener('load', function() {
+    const widget = document.querySelector('[data-tf-widget]');
+    if (widget && window.tsLayer) {
+      const entry = window.tsLayer.find(e => e.anonymous_id);
+      if (entry) {
+        widget.setAttribute('data-tf-hidden', 'ts_anonymous_id=' + entry.anonymous_id);
+      }
+    }
+  });
+</script>
+```
+
+### Popup Embed
+
+```html
+<button data-tf-popup="FORM_ID" data-tf-hidden="ts_anonymous_id=">
+  Open Form
+</button>
+<script src="//embed.typeform.com/next/embed.js"></script>
+<script>
+  document.querySelectorAll('[data-tf-popup]').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const entry = (window.tsLayer || []).find(e => e.anonymous_id);
+      if (entry) {
+        this.setAttribute('data-tf-hidden', 'ts_anonymous_id=' + entry.anonymous_id);
+      }
+    });
+  });
+</script>
+```
+
+## Logic Jumps and Multi-Page Forms
+
+Typeform's logic jumps work seamlessly with TrackSource. The webhook fires when the form is fully completed, regardless of which path the respondent took.
+
+Hidden fields persist across all pages and logic branches.
+
+## Quiz and Calculator Forms
+
+For Typeform quizzes and calculators:
+
+- Scores and outcomes are included in the webhook payload
+- TrackSource stores these in the event properties
+- You can filter leads by quiz outcome in analytics
+
+## Testing Your Integration
+
+1. **Submit a test response** to your Typeform
+2. **Check Typeform's webhook logs**: Connect → Webhooks → View recent deliveries
+3. **View in TrackSource**: Go to Analytics → Live Events
+
+### Test Delivery
+
+Typeform allows you to redeliver webhooks:
+
+1. Go to Connect → Webhooks
+2. Click on your webhook
+3. Find a recent delivery and click **Redeliver**
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Hidden field not passing">
+    1. Verify the hidden field is named exactly `ts_anonymous_id`
+    2. Check that the URL parameter or embed attribute is set
+    3. Ensure TrackSource script loads before Typeform
+  </Accordion>
+
+  <Accordion title="Webhook delivery failed">
+    1. Check Typeform's delivery logs for error details
+    2. Verify your Tenant ID is correct
+    3. Ensure the webhook URL has no typos
+    4. Try redelivering from Typeform's logs
+  </Accordion>
+
+  <Accordion title="Partial responses not tracked">
+    Typeform only sends webhooks for completed submissions. Partial responses (abandoned forms) are not sent to webhooks by default.
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Collect Email Early" icon="envelope">
+    Put the email question early in your form to capture leads even if they abandon later
+  </Card>
+  <Card title="Use Thank You Screen" icon="check">
+    Add a thank you screen that confirms submission and sets expectations
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="View Attribution" icon="chart-pie" href="/attribution/overview">
+    See which channels drive your Typeform leads
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send leads to Facebook for optimization
+  </Card>
+</CardGroup>

@@ -1,0 +1,253 @@
+---
+title: 'HubSpot Forms Integration - Track Leads with TrackSource'
+sidebarTitle: 'HubSpot'
+description: 'Connect HubSpot forms to TrackSource for automatic lead tracking and attribution. Sync leads between HubSpot CRM and TrackSource.'
+icon: 'hubspot'
+og:title: 'HubSpot + TrackSource Integration'
+og:description: 'Capture HubSpot form submissions and attribute them to the right marketing channels. Full CRM sync.'
+---
+
+# HubSpot Forms Integration
+
+Connect HubSpot forms to TrackSource to automatically capture leads, attribute them to marketing channels, and sync data between both platforms.
+
+## Integration Options
+
+<CardGroup cols={2}>
+  <Card title="Webhook Integration" icon="webhook">
+    Send form submissions to TrackSource via webhook. Best for attribution tracking.
+  </Card>
+  <Card title="HubSpot Workflows" icon="arrows-rotate">
+    Use HubSpot workflows to sync contacts. Best for bi-directional sync.
+  </Card>
+</CardGroup>
+
+## Webhook Setup
+
+<Steps>
+  <Step title="Open HubSpot Settings">
+    Go to **Settings** (gear icon) → **Marketing** → **Forms**
+  </Step>
+  <Step title="Select Your Form">
+    Click on the form you want to connect
+  </Step>
+  <Step title="Go to Options">
+    Click the **Options** tab
+  </Step>
+  <Step title="Add Webhook URL">
+    Under "Send form notifications to", add:
+    ```
+    https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
+    ```
+  </Step>
+  <Step title="Save Form">
+    Click **Update** or **Publish** to save changes
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Add Hidden Field
+
+For accurate attribution, add a hidden field to capture the TrackSource anonymous ID.
+
+### Step 1: Create Property
+
+1. Go to **Settings** → **Properties**
+2. Click **Create property**
+3. Configure:
+   - Object type: **Contact**
+   - Group: **Contact information**
+   - Label: **TrackSource Anonymous ID**
+   - Field type: **Single-line text**
+   - Internal name: `ts_anonymous_id`
+4. Click **Create**
+
+### Step 2: Add to Form
+
+1. Edit your HubSpot form
+2. Drag the `ts_anonymous_id` field onto your form
+3. Click on the field and toggle **Hidden field**
+4. Save the form
+
+### Step 3: Auto-Populate
+
+Add this script to pages with HubSpot forms:
+
+```html
+<script>
+  // Wait for HubSpot form to load
+  window.addEventListener('message', function(event) {
+    if (event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
+      // Get TrackSource anonymous ID
+      const tsLayer = window.tsLayer || [];
+      const entry = tsLayer.find(e => e.anonymous_id);
+
+      if (entry) {
+        // Set hidden field value
+        const hiddenField = document.querySelector('input[name="ts_anonymous_id"]');
+        if (hiddenField) {
+          hiddenField.value = entry.anonymous_id;
+        }
+      }
+    }
+  });
+</script>
+```
+
+## Payload Example
+
+When a form is submitted, TrackSource receives this payload:
+
+```json
+{
+  "vid": 12345,
+  "canonical-vid": 12345,
+  "merged-vids": [],
+  "portal-id": 123456,
+  "form-guid": "abc123-def456",
+  "properties": {
+    "email": {
+      "value": "john@example.com"
+    },
+    "firstname": {
+      "value": "John"
+    },
+    "lastname": {
+      "value": "Doe"
+    },
+    "phone": {
+      "value": "+1234567890"
+    },
+    "ts_anonymous_id": {
+      "value": "anon_abc123xyz"
+    }
+  }
+}
+```
+
+## Field Mapping
+
+TrackSource automatically maps these HubSpot properties:
+
+| HubSpot Property | TrackSource Field |
+|-----------------|-------------------|
+| `email` | `email` |
+| `phone` | `phone` |
+| `firstname` + `lastname` | `name` |
+| `ts_anonymous_id` | `anonymous_id` |
+
+## Workflow Integration (Advanced)
+
+For bi-directional sync, use HubSpot workflows to send data to TrackSource.
+
+### Create Workflow
+
+1. Go to **Automation** → **Workflows**
+2. Click **Create workflow** → **Contact-based**
+3. Set trigger: **Form submission** (select your form)
+4. Add action: **Send webhook**
+5. Configure webhook:
+   - URL: `https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID`
+   - Method: POST
+   - Include all contact properties
+6. Activate workflow
+
+### Benefits of Workflows
+
+- Trigger on any contact update, not just form submissions
+- Include lifecycle stage changes
+- Send deal data when contacts convert to customers
+- More control over what data is sent
+
+## HubSpot Popup Forms
+
+For popup forms, ensure the TrackSource script is loaded before HubSpot:
+
+```html
+<!-- Load TrackSource first -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+
+<!-- HubSpot tracking code -->
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/YOUR_HUB_ID.js"></script>
+```
+
+## Embedded HubSpot Forms
+
+When using the HubSpot form embed code:
+
+```html
+<script>
+  hbspt.forms.create({
+    portalId: "YOUR_HUB_ID",
+    formId: "YOUR_FORM_ID",
+    onFormReady: function($form) {
+      // Set hidden field after form loads
+      const tsLayer = window.tsLayer || [];
+      const entry = tsLayer.find(e => e.anonymous_id);
+      if (entry) {
+        $form.find('input[name="ts_anonymous_id"]').val(entry.anonymous_id);
+      }
+    }
+  });
+</script>
+```
+
+## Testing Your Integration
+
+1. **Submit a test form** on your website
+2. **Check HubSpot**: Contacts → find your test contact
+3. **View in TrackSource**: Go to Analytics → Live Events
+
+### Verify Hidden Field
+
+After form submission, check the contact in HubSpot:
+
+1. Go to **Contacts** → find the contact
+2. Click **View all properties**
+3. Search for `ts_anonymous_id`
+4. Verify the value starts with `anon_`
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Hidden field not populating">
+    1. Ensure TrackSource script loads before HubSpot
+    2. Verify the property internal name is exactly `ts_anonymous_id`
+    3. Check that the field is marked as hidden in the form editor
+    4. Test with browser console: check `window.tsLayer`
+  </Accordion>
+
+  <Accordion title="Webhook not firing">
+    1. Verify form submission notification URL is correct
+    2. Check HubSpot's webhook logs in Settings
+    3. Ensure the form is published and live
+    4. Test with a fresh form submission
+  </Accordion>
+
+  <Accordion title="Duplicate contacts">
+    HubSpot deduplicates by email. If you're seeing duplicates in TrackSource:
+    1. TrackSource also deduplicates by email
+    2. Check if you have multiple forms submitting
+    3. Verify webhook URL is only added once
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Sync Deals" icon="handshake" href="/payments/overview">
+    Track revenue when HubSpot deals close
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send leads to Facebook for optimization
+  </Card>
+</CardGroup>

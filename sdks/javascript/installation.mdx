@@ -1,0 +1,384 @@
+---
+title: 'JavaScript SDK Installation - TrackSource Tracking'
+sidebarTitle: 'Installation'
+description: 'Install the TrackSource JavaScript SDK to track website visitors, capture leads, and attribute conversions. One script tag setup.'
+icon: 'download'
+og:title: 'Install TrackSource JavaScript SDK'
+og:description: 'Add TrackSource tracking to your website with a single script tag. Works with any website or framework.'
+---
+
+# JavaScript SDK Installation
+
+Add the TrackSource JavaScript SDK to your website to track visitors, capture leads, and attribute conversions to marketing channels.
+
+## Quick Installation
+
+Add this script to the `<head>` section of every page:
+
+```html
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your Tenant ID from the TrackSource dashboard (**Settings** → **General**).
+</Warning>
+
+## Framework-Specific Installation
+
+<Tabs>
+  <Tab title="HTML / Static Sites">
+    Add the script directly to your HTML:
+
+    ```html
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Your Website</title>
+
+      <!-- TrackSource SDK -->
+      <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+        new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+      </script>
+    </head>
+    <body>
+      <!-- Your content -->
+    </body>
+    </html>
+    ```
+  </Tab>
+
+  <Tab title="Next.js">
+    Using the App Router:
+
+    ```tsx
+    // app/layout.tsx
+    import Script from 'next/script'
+
+    export default function RootLayout({
+      children,
+    }: {
+      children: React.ReactNode
+    }) {
+      return (
+        <html lang="en">
+          <head>
+            <Script
+              id="tracksource"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+                  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+                  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+                  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                  })(window,document,'script','tsLayer','${process.env.NEXT_PUBLIC_TRACKSOURCE_ID}');
+                `,
+              }}
+            />
+          </head>
+          <body>{children}</body>
+        </html>
+      )
+    }
+    ```
+
+    Add to `.env.local`:
+    ```
+    NEXT_PUBLIC_TRACKSOURCE_ID=your_tenant_id
+    ```
+  </Tab>
+
+  <Tab title="React">
+    Add to your `public/index.html` or use a component:
+
+    ```jsx
+    // src/components/TrackSource.jsx
+    import { useEffect } from 'react';
+
+    export function TrackSource() {
+      useEffect(() => {
+        // Skip if already loaded
+        if (window.ts) return;
+
+        (function(w,d,s,l,i){
+          w[l]=w[l]||[];
+          w[l].push({'ts.start': new Date().getTime(), event:'ts.js'});
+          var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),
+          dl=l!='tsLayer'?'&l='+l:'';
+          j.async=true;
+          j.src='https://cdn.tracksource.io/ts.js?id='+i+dl;
+          f.parentNode.insertBefore(j,f);
+        })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
+      }, []);
+
+      return null;
+    }
+
+    // In App.jsx
+    import { TrackSource } from './components/TrackSource';
+
+    function App() {
+      return (
+        <>
+          <TrackSource />
+          {/* Your app */}
+        </>
+      );
+    }
+    ```
+  </Tab>
+
+  <Tab title="Vue.js">
+    Add to your main template or use a component:
+
+    ```vue
+    <!-- src/App.vue -->
+    <script setup>
+    import { onMounted } from 'vue'
+
+    onMounted(() => {
+      if (window.ts) return;
+
+      (function(w,d,s,l,i){
+        w[l]=w[l]||[];
+        w[l].push({'ts.start': new Date().getTime(), event:'ts.js'});
+        var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),
+        dl=l!='tsLayer'?'&l='+l:'';
+        j.async=true;
+        j.src='https://cdn.tracksource.io/ts.js?id='+i+dl;
+        f.parentNode.insertBefore(j,f);
+      })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
+    })
+    </script>
+    ```
+  </Tab>
+
+  <Tab title="WordPress">
+    **Option 1: Theme Editor**
+
+    1. Go to **Appearance** → **Theme Editor**
+    2. Open `header.php`
+    3. Paste the script before `</head>`
+    4. Save changes
+
+    **Option 2: Plugin**
+
+    Use a plugin like "Insert Headers and Footers":
+
+    1. Install and activate the plugin
+    2. Go to **Settings** → **Insert Headers and Footers**
+    3. Paste the script in **Scripts in Header**
+    4. Save
+  </Tab>
+
+  <Tab title="Shopify">
+    1. Go to **Online Store** → **Themes**
+    2. Click **Actions** → **Edit code**
+    3. Open `theme.liquid`
+    4. Find the `<head>` section
+    5. Paste the script before `</head>`
+    6. Save
+
+    ```liquid
+    <!-- TrackSource -->
+    <script>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+      new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+    </script>
+    ```
+  </Tab>
+
+  <Tab title="Webflow">
+    1. Go to **Project Settings** → **Custom Code**
+    2. Paste the script in **Head Code**
+    3. Save and publish your site
+  </Tab>
+</Tabs>
+
+## Tag Manager Installation
+
+<Tabs>
+  <Tab title="Google Tag Manager">
+    1. Create a new **Custom HTML** tag
+    2. Paste the TrackSource script
+    3. Set trigger to **All Pages**
+    4. Save and publish
+
+    ```html
+    <script>
+      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+      new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+      'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+    </script>
+    ```
+  </Tab>
+</Tabs>
+
+## NPM Installation (Advanced)
+
+For projects using npm/yarn:
+
+```bash
+npm install @tracksource/sdk
+```
+
+```javascript
+import { TrackSource } from '@tracksource/sdk';
+
+const ts = new TrackSource('YOUR_TENANT_ID');
+ts.init();
+
+// Track events
+ts.track('page_view');
+ts.identify('user@example.com');
+```
+
+<Note>
+  The npm package requires additional configuration. See the [React integration guide](/integration/react) for details.
+</Note>
+
+## Verify Installation
+
+### Method 1: Browser Console
+
+1. Open your website
+2. Open Developer Tools (F12 or Cmd+Option+I)
+3. Go to the Console tab
+4. Look for `[TrackSource] Initialized`
+
+### Method 2: Network Tab
+
+1. Open Developer Tools
+2. Go to the Network tab
+3. Refresh the page
+4. Search for `ts.js`
+5. Verify it loads successfully (200 status)
+
+### Method 3: TrackSource Dashboard
+
+1. Go to your TrackSource dashboard
+2. Navigate to **Analytics** → **Live Events**
+3. Visit your website in another tab
+4. See the `page_view` event appear in real-time
+
+## What Gets Tracked Automatically
+
+Once installed, TrackSource automatically tracks:
+
+| Event | When | Data Captured |
+|-------|------|---------------|
+| `page_view` | Every page load | URL, referrer, title |
+| `session_start` | New session begins | UTM parameters, click IDs |
+
+Additional data captured:
+
+- **UTM Parameters**: source, medium, campaign, content, term
+- **Click IDs**: fbclid, gclid, ttclid, li_fat_id
+- **Browser IDs**: fbp (Facebook), _ga (Google Analytics)
+- **Device Info**: Browser, OS, device type
+- **Geo Info**: Country, region (from IP)
+
+## Script Loading
+
+The TrackSource SDK is:
+
+- **Async**: Doesn't block page rendering
+- **Lightweight**: < 10KB gzipped
+- **Cached**: Uses CDN with long cache headers
+- **Reliable**: 99.99% uptime SLA
+
+### Loading Order
+
+For best results, load the TrackSource script before other marketing scripts:
+
+```html
+<head>
+  <!-- TrackSource first -->
+  <script>/* TrackSource script */</script>
+
+  <!-- Then other scripts -->
+  <script>/* Facebook Pixel */</script>
+  <script>/* Google Analytics */</script>
+</head>
+```
+
+## Multiple Domains
+
+If you have multiple domains pointing to the same site:
+
+```html
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+
+  // Set cookie domain for cross-subdomain tracking
+  window.tsConfig = {
+    cookieDomain: '.yourdomain.com'
+  };
+</script>
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Script not loading">
+    1. Check browser console for errors
+    2. Verify Tenant ID is correct
+    3. Check if ad blockers are blocking the script
+    4. Ensure script is in the `<head>` section
+  </Accordion>
+
+  <Accordion title="Events not appearing in dashboard">
+    1. Wait 30 seconds after page load
+    2. Check the correct time range in dashboard
+    3. Verify Tenant ID matches between script and dashboard
+    4. Check Network tab for successful event requests
+  </Accordion>
+
+  <Accordion title="Console errors">
+    Common errors:
+
+    - `ts is not defined`: Script hasn't loaded yet. Use `window.ts` or wait for load.
+    - `Invalid tenant ID`: Check your Tenant ID is correct.
+    - `Network error`: Check internet connection and firewall settings.
+  </Accordion>
+
+  <Accordion title="Slow page load">
+    The script is async and shouldn't slow down page load. If experiencing issues:
+
+    1. Check if other scripts are blocking
+    2. Verify CDN is accessible from your region
+    3. Contact support if issues persist
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Configuration" icon="gear" href="/sdks/javascript/configuration">
+    Customize SDK behavior and settings
+  </Card>
+  <Card title="Track Events" icon="bolt" href="/sdks/javascript/tracking">
+    Learn to track custom events
+  </Card>
+</CardGroup>

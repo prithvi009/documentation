@@ -1,0 +1,444 @@
+---
+title: 'Custom Forms Integration - Track Any Form with TrackSource'
+sidebarTitle: 'Custom Forms'
+description: 'Connect any custom HTML form to TrackSource for lead tracking. Universal webhook endpoint for any form that can send HTTP POST requests.'
+icon: 'code'
+og:title: 'Custom Form Tracking | TrackSource'
+og:description: 'Track leads from any form provider or custom HTML forms. Universal webhook integration guide.'
+---
+
+# Custom Forms Integration
+
+TrackSource can receive data from any form that can send HTTP POST requests. This guide covers how to integrate custom HTML forms, third-party form builders, and any webhook-capable system.
+
+## Universal Webhook Endpoint
+
+Send form data to this endpoint:
+
+```
+POST https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID
+```
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Payload Format
+
+Send a JSON payload with the following structure:
+
+```json
+{
+  "email": "john@example.com",
+  "name": "John Doe",
+  "phone": "+1234567890",
+  "ts_anonymous_id": "anon_abc123xyz",
+  "custom_field_1": "value1",
+  "custom_field_2": "value2"
+}
+```
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `email` | string | Contact's email address (required) |
+
+### Recommended Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Full name |
+| `phone` | string | Phone number |
+| `ts_anonymous_id` | string | TrackSource anonymous ID for attribution |
+
+### Optional Fields
+
+Any additional fields are stored as event properties and available in your analytics.
+
+## HTML Form Integration
+
+### Basic HTML Form
+
+```html
+<form id="contact-form">
+  <input type="email" name="email" required placeholder="Email">
+  <input type="text" name="name" placeholder="Name">
+  <input type="tel" name="phone" placeholder="Phone">
+  <input type="hidden" name="ts_anonymous_id" id="ts_anonymous_id">
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+  // Populate hidden field with TrackSource ID
+  document.getElementById('ts_anonymous_id').value =
+    (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+
+  // Handle form submission
+  document.getElementById('contact-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (response.ok) {
+        // Handle success
+        alert('Form submitted successfully!');
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
+  });
+</script>
+```
+
+### React Form
+
+```jsx
+import { useState, useEffect } from 'react';
+
+function ContactForm() {
+  const [anonymousId, setAnonymousId] = useState('');
+
+  useEffect(() => {
+    // Get TrackSource anonymous ID
+    const tsLayer = window.tsLayer || [];
+    const entry = tsLayer.find(e => e.anonymous_id);
+    if (entry) {
+      setAnonymousId(entry.anonymous_id);
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const data = {
+      email: formData.get('email'),
+      name: formData.get('name'),
+      phone: formData.get('phone'),
+      ts_anonymous_id: anonymousId
+    };
+
+    const response = await fetch(
+      'https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }
+    );
+
+    if (response.ok) {
+      // Handle success
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input type="email" name="email" required placeholder="Email" />
+      <input type="text" name="name" placeholder="Name" />
+      <input type="tel" name="phone" placeholder="Phone" />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+### Next.js with Server Action
+
+```jsx
+// app/contact/page.tsx
+'use client';
+
+import { useFormState } from 'react-dom';
+import { submitForm } from './actions';
+
+export default function ContactPage() {
+  const [state, formAction] = useFormState(submitForm, null);
+
+  return (
+    <form action={formAction}>
+      <input type="email" name="email" required />
+      <input type="text" name="name" />
+      <input
+        type="hidden"
+        name="ts_anonymous_id"
+        defaultValue={typeof window !== 'undefined'
+          ? (window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id || '')
+          : ''
+        }
+      />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+
+// app/contact/actions.ts
+'use server';
+
+export async function submitForm(prevState, formData) {
+  const response = await fetch(
+    'https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: formData.get('email'),
+        name: formData.get('name'),
+        ts_anonymous_id: formData.get('ts_anonymous_id')
+      })
+    }
+  );
+
+  return { success: response.ok };
+}
+```
+
+## Server-Side Integration
+
+If your form submits to your own backend first, forward the data to TrackSource:
+
+### Node.js / Express
+
+```javascript
+const express = require('express');
+const app = express();
+
+app.post('/api/contact', async (req, res) => {
+  const { email, name, phone, ts_anonymous_id } = req.body;
+
+  // Your business logic here
+  // ...
+
+  // Forward to TrackSource
+  await fetch('https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      name,
+      phone,
+      ts_anonymous_id,
+      source: 'contact_form'
+    })
+  });
+
+  res.json({ success: true });
+});
+```
+
+### Python / Flask
+
+```python
+from flask import Flask, request
+import requests
+
+app = Flask(__name__)
+
+@app.route('/api/contact', methods=['POST'])
+def contact():
+    data = request.json
+
+    # Your business logic here
+    # ...
+
+    # Forward to TrackSource
+    requests.post(
+        'https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID',
+        json={
+            'email': data.get('email'),
+            'name': data.get('name'),
+            'phone': data.get('phone'),
+            'ts_anonymous_id': data.get('ts_anonymous_id')
+        }
+    )
+
+    return {'success': True}
+```
+
+### PHP
+
+```php
+<?php
+
+$data = json_decode(file_get_contents('php://input'), true);
+
+// Your business logic here
+// ...
+
+// Forward to TrackSource
+$ch = curl_init('https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+    'email' => $data['email'],
+    'name' => $data['name'],
+    'phone' => $data['phone'],
+    'ts_anonymous_id' => $data['ts_anonymous_id']
+]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_exec($ch);
+curl_close($ch);
+
+echo json_encode(['success' => true]);
+```
+
+## Third-Party Form Builders
+
+### Webflow
+
+1. Create your form in Webflow
+2. Go to **Form Settings**
+3. Set **Action** to:
+   ```
+   https://events.tracksource.io/webhooks/webflow/YOUR_TENANT_ID
+   ```
+4. Set **Method** to POST
+
+### JotForm
+
+1. Open your form in JotForm
+2. Go to **Settings** → **Integrations**
+3. Search for **Webhook**
+4. Add webhook URL:
+   ```
+   https://events.tracksource.io/webhooks/jotform/YOUR_TENANT_ID
+   ```
+
+### Gravity Forms (WordPress)
+
+1. Edit your form
+2. Go to **Settings** → **Webhooks**
+3. Click **Add New**
+4. Configure:
+   - Request URL: `https://events.tracksource.io/webhooks/gravity/YOUR_TENANT_ID`
+   - Request Method: POST
+   - Request Format: JSON
+5. Map your fields to the expected TrackSource fields
+
+### GoHighLevel
+
+1. Go to **Automation** → **Workflows**
+2. Create a new workflow with trigger: Form Submitted
+3. Add action: **HTTP Request**
+4. Configure:
+   - URL: `https://events.tracksource.io/webhooks/gohighlevel/YOUR_TENANT_ID`
+   - Method: POST
+   - Body: Map contact fields
+
+## Including UTM Parameters
+
+Always include UTM parameters when available:
+
+```javascript
+const urlParams = new URLSearchParams(window.location.search);
+
+const payload = {
+  email: 'john@example.com',
+  name: 'John Doe',
+  ts_anonymous_id: anonymousId,
+  utm_source: urlParams.get('utm_source'),
+  utm_medium: urlParams.get('utm_medium'),
+  utm_campaign: urlParams.get('utm_campaign'),
+  utm_content: urlParams.get('utm_content'),
+  utm_term: urlParams.get('utm_term'),
+  landing_page: window.location.pathname,
+  referrer: document.referrer
+};
+```
+
+## Response Handling
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "event_id": "evt_abc123",
+  "message": "Lead captured successfully"
+}
+```
+
+### Error Responses
+
+| Status | Response | Meaning |
+|--------|----------|---------|
+| 400 | `{"error": "Email is required"}` | Missing required field |
+| 401 | `{"error": "Invalid tenant ID"}` | Wrong tenant ID |
+| 429 | `{"error": "Rate limit exceeded"}` | Too many requests |
+| 500 | `{"error": "Internal server error"}` | Try again later |
+
+## Testing Your Integration
+
+### Using cURL
+
+```bash
+curl -X POST https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "name": "Test User",
+    "phone": "+1234567890",
+    "ts_anonymous_id": "anon_test123"
+  }'
+```
+
+### Using JavaScript Console
+
+```javascript
+fetch('https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'test@example.com',
+    name: 'Test User',
+    ts_anonymous_id: window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id
+  })
+}).then(r => r.json()).then(console.log);
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="CORS errors">
+    If you're getting CORS errors when submitting from the browser:
+    1. TrackSource allows all origins - check your request format
+    2. Ensure you're using `Content-Type: application/json`
+    3. Try using `mode: 'cors'` in your fetch options
+  </Accordion>
+
+  <Accordion title="Form not submitting">
+    1. Check browser console for JavaScript errors
+    2. Verify the webhook URL is correct
+    3. Ensure email field is present and valid
+    4. Check network tab for response status
+  </Accordion>
+
+  <Accordion title="Attribution not linking">
+    1. Ensure TrackSource script loads before form submission
+    2. Verify `ts_anonymous_id` is being sent
+    3. Check that cookies are enabled
+    4. Test on the same domain as the tracking script
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Track Conversions" icon="chart-line" href="/sdks/javascript/tracking">
+    Learn to track purchases and custom events
+  </Card>
+  <Card title="Query Leads" icon="database" href="/api-reference/leads/query">
+    Access your lead data via API
+  </Card>
+</CardGroup>

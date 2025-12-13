@@ -1,0 +1,424 @@
+---
+title: 'JavaScript SDK Configuration - TrackSource Settings'
+sidebarTitle: 'Configuration'
+description: 'Configure the TrackSource JavaScript SDK. Customize tracking behavior, cookie settings, and data collection options.'
+icon: 'gear'
+og:title: 'Configure TrackSource JavaScript SDK'
+og:description: 'Customize TrackSource tracking behavior with configuration options for cookies, domains, and privacy settings.'
+---
+
+# JavaScript SDK Configuration
+
+Customize the TrackSource JavaScript SDK behavior with configuration options.
+
+## Basic Configuration
+
+Set configuration options before the script loads:
+
+```html
+<script>
+  // Set config before TrackSource loads
+  window.tsConfig = {
+    debug: false,
+    trackPageViews: true,
+    cookieDomain: 'auto'
+  };
+
+  // TrackSource script
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+## Configuration Options
+
+### Core Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `debug` | boolean | `false` | Enable console logging |
+| `enabled` | boolean | `true` | Enable/disable tracking |
+| `trackPageViews` | boolean | `true` | Auto-track page views |
+
+### Cookie Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `cookieDomain` | string | `'auto'` | Cookie domain (auto-detected) |
+| `cookieExpiry` | number | `365` | Cookie expiration in days |
+| `cookiePath` | string | `'/'` | Cookie path |
+| `cookieSecure` | boolean | `true` | Use secure cookies |
+| `cookieSameSite` | string | `'Lax'` | SameSite attribute |
+
+### Privacy Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `respectDoNotTrack` | boolean | `false` | Honor browser DNT setting |
+| `anonymizeIp` | boolean | `false` | Anonymize IP addresses |
+| `requireConsent` | boolean | `false` | Wait for consent before tracking |
+
+## Debug Mode
+
+Enable debug mode to see detailed logs:
+
+```javascript
+window.tsConfig = {
+  debug: true
+};
+```
+
+Console output:
+
+```
+[TrackSource] Initializing with tenant: xxx
+[TrackSource] Page view tracked: /pricing
+[TrackSource] Event tracked: button_click
+[TrackSource] User identified: john@example.com
+```
+
+## Cookie Domain
+
+### Auto Detection (Default)
+
+By default, TrackSource auto-detects the cookie domain:
+
+```javascript
+window.tsConfig = {
+  cookieDomain: 'auto'
+};
+```
+
+### Cross-Subdomain Tracking
+
+To track across subdomains, set the root domain:
+
+```javascript
+window.tsConfig = {
+  cookieDomain: '.yourdomain.com'
+};
+```
+
+This allows tracking across:
+- `www.yourdomain.com`
+- `app.yourdomain.com`
+- `blog.yourdomain.com`
+
+### Specific Domain
+
+Set a specific domain:
+
+```javascript
+window.tsConfig = {
+  cookieDomain: 'app.yourdomain.com'
+};
+```
+
+## Disable Automatic Page Views
+
+By default, TrackSource tracks page views automatically. To disable:
+
+```javascript
+window.tsConfig = {
+  trackPageViews: false
+};
+```
+
+Then track manually:
+
+```javascript
+// Track page view manually
+ts.track('page_view', {
+  page: '/custom-page',
+  title: 'Custom Page Title'
+});
+```
+
+## Single Page Applications (SPA)
+
+For SPAs like React, Vue, or Angular:
+
+```javascript
+window.tsConfig = {
+  trackPageViews: false  // Disable auto-tracking
+};
+```
+
+Then track on route changes:
+
+### React Router
+
+```jsx
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+function TrackPageViews() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Track page view on route change
+    if (window.ts) {
+      window.ts.track('page_view', {
+        page: location.pathname,
+        title: document.title
+      });
+    }
+  }, [location]);
+
+  return null;
+}
+```
+
+### Vue Router
+
+```javascript
+// router/index.js
+router.afterEach((to) => {
+  if (window.ts) {
+    window.ts.track('page_view', {
+      page: to.path,
+      title: document.title
+    });
+  }
+});
+```
+
+### Next.js App Router
+
+```tsx
+// app/layout.tsx
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+
+export function TrackPageView() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (window.ts) {
+      window.ts.track('page_view', {
+        page: pathname,
+        title: document.title
+      });
+    }
+  }, [pathname]);
+
+  return null;
+}
+```
+
+## Privacy Compliance
+
+### GDPR - Require Consent
+
+Wait for user consent before tracking:
+
+```javascript
+window.tsConfig = {
+  requireConsent: true,
+  enabled: false  // Start disabled
+};
+```
+
+Then enable after consent:
+
+```javascript
+// When user accepts cookies
+function onConsentGiven() {
+  if (window.ts) {
+    window.ts.enable();
+  }
+}
+
+// When user declines
+function onConsentDeclined() {
+  if (window.ts) {
+    window.ts.disable();
+  }
+}
+```
+
+### Cookie Consent Integration
+
+With popular consent managers:
+
+```javascript
+// OneTrust example
+OptanonWrapper = function() {
+  if (OnetrustActiveGroups.includes('C0004')) {
+    // Performance cookies accepted
+    window.ts && window.ts.enable();
+  }
+};
+
+// CookieYes example
+document.addEventListener('cookieyes_consent_update', function(e) {
+  if (e.detail.accepted.includes('analytics')) {
+    window.ts && window.ts.enable();
+  }
+});
+```
+
+### Respect Do Not Track
+
+Honor the browser's Do Not Track setting:
+
+```javascript
+window.tsConfig = {
+  respectDoNotTrack: true
+};
+```
+
+### Anonymize IP
+
+Remove the last octet of IP addresses:
+
+```javascript
+window.tsConfig = {
+  anonymizeIp: true
+};
+
+// 192.168.1.123 becomes 192.168.1.0
+```
+
+## Custom Data Layer Name
+
+Change the data layer variable name:
+
+```javascript
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','customLayerName','YOUR_TENANT_ID');
+```
+
+Access with:
+
+```javascript
+window.customLayerName.push({...});
+```
+
+## Environment-Based Config
+
+Different settings for development vs production:
+
+```javascript
+const isDev = window.location.hostname === 'localhost';
+
+window.tsConfig = {
+  debug: isDev,
+  enabled: !isDev,  // Disable in development
+  cookieSecure: !isDev
+};
+```
+
+Or use environment variables in frameworks:
+
+```javascript
+// Next.js
+window.tsConfig = {
+  debug: process.env.NODE_ENV === 'development',
+  enabled: process.env.NODE_ENV === 'production'
+};
+```
+
+## Custom Endpoint
+
+For enterprise customers with custom endpoints:
+
+```javascript
+window.tsConfig = {
+  apiEndpoint: 'https://custom.yourdomain.com/events'
+};
+```
+
+## Session Configuration
+
+Customize session behavior:
+
+```javascript
+window.tsConfig = {
+  sessionTimeout: 30,  // Minutes of inactivity before new session
+  sessionRenewal: true  // Extend session on activity
+};
+```
+
+## Queue Configuration
+
+Configure event queuing:
+
+```javascript
+window.tsConfig = {
+  batchSize: 10,       // Events per batch
+  batchInterval: 2000, // Batch interval in ms
+  maxRetries: 3        // Retry failed events
+};
+```
+
+## Full Configuration Example
+
+```javascript
+window.tsConfig = {
+  // Core
+  debug: false,
+  enabled: true,
+  trackPageViews: true,
+
+  // Cookies
+  cookieDomain: '.yourdomain.com',
+  cookieExpiry: 365,
+  cookiePath: '/',
+  cookieSecure: true,
+  cookieSameSite: 'Lax',
+
+  // Privacy
+  respectDoNotTrack: false,
+  anonymizeIp: false,
+  requireConsent: false,
+
+  // Session
+  sessionTimeout: 30,
+  sessionRenewal: true,
+
+  // Batching
+  batchSize: 10,
+  batchInterval: 2000,
+  maxRetries: 3
+};
+```
+
+## Runtime Configuration
+
+Change settings after initialization:
+
+```javascript
+// Enable/disable tracking
+ts.enable();
+ts.disable();
+
+// Check if enabled
+if (ts.isEnabled()) {
+  // Tracking is active
+}
+
+// Update config
+ts.config({
+  debug: true
+});
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Track Events" icon="bolt" href="/sdks/javascript/tracking">
+    Learn to track custom events
+  </Card>
+  <Card title="Identify Users" icon="user" href="/sdks/javascript/identify">
+    Link anonymous users to known identities
+  </Card>
+</CardGroup>

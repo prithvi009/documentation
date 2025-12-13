@@ -1,0 +1,291 @@
+---
+title: 'Calendly Integration - Track Bookings with TrackSource'
+sidebarTitle: 'Calendly'
+description: 'Connect Calendly to TrackSource to track call bookings and attribute them to marketing channels. See which ads drive your booked calls.'
+icon: 'calendar'
+og:title: 'Calendly + TrackSource Integration'
+og:description: 'Track Calendly bookings and attribute them to the right marketing channels. Full setup guide.'
+---
+
+# Calendly Integration
+
+Connect Calendly to TrackSource to automatically track meeting bookings and attribute them to the correct marketing channels. See which ads and campaigns drive your booked calls.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Open Calendly Settings">
+    Go to [calendly.com](https://calendly.com) and click **Integrations**
+  </Step>
+  <Step title="Find Webhooks">
+    Scroll down and click on **Webhooks**
+  </Step>
+  <Step title="Create Webhook Subscription">
+    Click **Create Webhook Subscription**
+  </Step>
+  <Step title="Configure Webhook">
+    - **Subscriber URL**:
+    ```
+    https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID
+    ```
+    - **Events**: Select `invitee.created`
+    - **Scope**: Choose your organization or specific event types
+  </Step>
+  <Step title="Create Webhook">
+    Click **Create Webhook**
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Event Types to Subscribe
+
+For complete tracking, subscribe to these events:
+
+| Event | When It Fires | Use Case |
+|-------|--------------|----------|
+| `invitee.created` | Meeting booked | Track new bookings (required) |
+| `invitee.canceled` | Meeting canceled | Track cancellations |
+| `invitee_no_show` | Attendee didn't show | Track no-shows |
+
+<Info>
+  The `invitee.created` event is required for lead tracking. Other events are optional but help with conversion funnel analysis.
+</Info>
+
+## Pass UTM Parameters
+
+Calendly supports UTM parameter passthrough. This helps TrackSource match bookings to marketing campaigns.
+
+### Method 1: Scheduling Page URL
+
+Add UTM parameters to your Calendly scheduling page link:
+
+```
+https://calendly.com/your-name/30min?utm_source=facebook&utm_medium=paid&utm_campaign=winter_sale
+```
+
+### Method 2: Embed with Parameters
+
+When embedding Calendly, pass the UTM parameters:
+
+```html
+<!-- Calendly inline widget -->
+<div class="calendly-inline-widget"
+     data-url="https://calendly.com/your-name/30min?utm_source=facebook&utm_medium=paid"
+     style="min-width:320px;height:630px;">
+</div>
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+```
+
+### Method 3: Dynamic UTM Passthrough
+
+Automatically pass the current page's UTM parameters to Calendly:
+
+```html
+<script>
+  // Get UTM parameters from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const utmParams = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+
+  // Build Calendly URL with UTMs
+  let calendlyUrl = 'https://calendly.com/your-name/30min?';
+  utmParams.forEach(param => {
+    if (urlParams.has(param)) {
+      calendlyUrl += `${param}=${urlParams.get(param)}&`;
+    }
+  });
+
+  // Add TrackSource anonymous ID
+  const tsLayer = window.tsLayer || [];
+  const entry = tsLayer.find(e => e.anonymous_id);
+  if (entry) {
+    calendlyUrl += `ts_anonymous_id=${entry.anonymous_id}`;
+  }
+
+  // Update Calendly widget
+  document.querySelector('.calendly-inline-widget').setAttribute('data-url', calendlyUrl);
+</script>
+```
+
+## Custom Questions for Attribution
+
+Add a custom question to capture the TrackSource anonymous ID:
+
+### Step 1: Create Custom Question
+
+1. Go to **Event Types** → select your event
+2. Click **Edit** → **Booking Form**
+3. Click **Add New Question**
+4. Configure:
+   - Type: **One line text**
+   - Question: **Tracking ID**
+   - Required: No
+   - Show on booking page: No (hidden)
+   - Answer identifier: `ts_anonymous_id`
+
+### Step 2: Pre-fill the Question
+
+When linking to Calendly, include the answer:
+
+```javascript
+const tsLayer = window.tsLayer || [];
+const entry = tsLayer.find(e => e.anonymous_id);
+const calendlyUrl = `https://calendly.com/your-name/30min?a1=${entry?.anonymous_id || ''}`;
+```
+
+<Note>
+  `a1` refers to the first custom question. Use `a2`, `a3`, etc. for additional questions.
+</Note>
+
+## Payload Example
+
+When a meeting is booked, TrackSource receives this payload:
+
+```json
+{
+  "event": "invitee.created",
+  "time": "2024-01-15T10:30:00Z",
+  "payload": {
+    "event_type": {
+      "uuid": "event_type_123",
+      "name": "30 Minute Meeting"
+    },
+    "event": {
+      "uuid": "event_123",
+      "start_time": "2024-01-20T14:00:00Z",
+      "end_time": "2024-01-20T14:30:00Z"
+    },
+    "invitee": {
+      "uuid": "invitee_123",
+      "email": "john@example.com",
+      "name": "John Doe",
+      "timezone": "America/New_York"
+    },
+    "questions_and_answers": [
+      {
+        "question": "Tracking ID",
+        "answer": "anon_abc123xyz"
+      }
+    ],
+    "tracking": {
+      "utm_source": "facebook",
+      "utm_medium": "paid",
+      "utm_campaign": "winter_sale"
+    }
+  }
+}
+```
+
+## Field Mapping
+
+TrackSource automatically maps:
+
+| Calendly Field | TrackSource Field |
+|---------------|-------------------|
+| `invitee.email` | `email` |
+| `invitee.name` | `name` |
+| `tracking.utm_*` | `utm_*` |
+| Custom question answer | `anonymous_id` |
+
+## Embedding Calendly
+
+### Inline Widget
+
+```html
+<!-- TrackSource script -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+
+<!-- Calendly widget with dynamic parameters -->
+<div id="calendly-embed" style="min-width:320px;height:630px;"></div>
+<script src="https://assets.calendly.com/assets/external/widget.js" async></script>
+<script>
+  window.addEventListener('load', function() {
+    const tsLayer = window.tsLayer || [];
+    const entry = tsLayer.find(e => e.anonymous_id);
+
+    Calendly.initInlineWidget({
+      url: 'https://calendly.com/your-name/30min',
+      parentElement: document.getElementById('calendly-embed'),
+      prefill: {},
+      utm: {
+        utmSource: new URLSearchParams(window.location.search).get('utm_source'),
+        utmMedium: new URLSearchParams(window.location.search).get('utm_medium'),
+        utmCampaign: new URLSearchParams(window.location.search).get('utm_campaign')
+      }
+    });
+  });
+</script>
+```
+
+### Popup Widget
+
+```html
+<a href="" onclick="Calendly.initPopupWidget({url: 'https://calendly.com/your-name/30min'});return false;">
+  Schedule a Call
+</a>
+```
+
+## Testing Your Integration
+
+1. **Book a test meeting** on your Calendly page
+2. **Check Calendly**: Go to Integrations → Webhooks → View recent deliveries
+3. **View in TrackSource**: Go to Analytics → Live Events
+
+### Test Webhook
+
+1. Go to **Integrations** → **Webhooks**
+2. Find your webhook and click **Test**
+3. Verify the test event appears in TrackSource
+
+## Tracking the Full Funnel
+
+Combine Calendly booking with purchase tracking:
+
+```
+Facebook Ad Click → Landing Page → Calendly Booking → Sales Call → Purchase
+       ↓                ↓               ↓               ↓           ↓
+   TrackSource      page_view        lead event    (manual/CRM)  conversion
+   captures fbp     tracked          captured                     attributed
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Bookings not appearing in TrackSource">
+    1. Verify webhook URL is correct
+    2. Check Calendly's webhook delivery logs
+    3. Ensure you subscribed to `invitee.created` event
+    4. Test with the webhook test feature
+  </Accordion>
+
+  <Accordion title="UTM parameters not captured">
+    1. Ensure UTM parameters are in the Calendly URL
+    2. Use the tracking passthrough feature
+    3. Check the webhook payload in Calendly's logs
+  </Accordion>
+
+  <Accordion title="Cannot match booking to visitor">
+    Without the anonymous ID custom question, TrackSource matches by email. Ensure:
+    1. The email address is the same as used elsewhere
+    2. Consider adding the custom question for deterministic matching
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Track Payments" icon="credit-card" href="/payments/overview">
+    Connect Stripe to track revenue from booked calls
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send bookings to Facebook for optimization
+  </Card>
+</CardGroup>

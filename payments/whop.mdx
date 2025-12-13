@@ -1,0 +1,367 @@
+---
+title: 'Whop Integration - Track Digital Product Sales with TrackSource'
+sidebarTitle: 'Whop'
+description: 'Connect Whop to TrackSource to track digital product sales, memberships, and course purchases. Attribute revenue to marketing channels.'
+icon: 'cart-shopping'
+og:title: 'Whop + TrackSource Integration'
+og:description: 'Track Whop sales and attribute them to marketing channels. Complete webhook setup guide.'
+---
+
+# Whop Integration
+
+Connect Whop to TrackSource to automatically track digital product sales, memberships, and course purchases. Attribute every sale to the marketing channel that drove it.
+
+## What is Whop?
+
+Whop is a platform for selling digital products, memberships, courses, and software access. It's popular with creators, course sellers, and SaaS businesses.
+
+## Quick Setup
+
+<Steps>
+  <Step title="Open Whop Dashboard">
+    Go to [dash.whop.com](https://dash.whop.com) and sign in
+  </Step>
+  <Step title="Go to Developer Settings">
+    Click on your company → **Settings** → **Developer**
+  </Step>
+  <Step title="Create Webhook">
+    Click **Create Webhook**
+  </Step>
+  <Step title="Configure Webhook">
+    - **URL**:
+    ```
+    https://events.tracksource.io/webhooks/whop/YOUR_TENANT_ID
+    ```
+    - **Events**: Select the events listed below
+  </Step>
+  <Step title="Save Webhook">
+    Click **Save** to activate the webhook
+  </Step>
+</Steps>
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from the TrackSource dashboard.
+</Warning>
+
+## Events to Subscribe
+
+Select these events for complete tracking:
+
+### Required Events
+
+| Event | When It Fires | Use Case |
+|-------|--------------|----------|
+| `membership.went_valid` | New purchase/subscription starts | Track initial sales |
+| `payment.succeeded` | Payment completes | Track revenue |
+
+### Recommended Events
+
+| Event | When It Fires | Use Case |
+|-------|--------------|----------|
+| `membership.went_invalid` | Subscription ends/cancels | Track churn |
+| `membership.renewed` | Subscription renews | Track recurring revenue |
+| `payment.failed` | Payment fails | Track failed conversions |
+
+## Linking Customers
+
+For accurate attribution, link Whop customers to their TrackSource journey.
+
+### Method 1: Checkout URL Parameters
+
+When linking to your Whop checkout, include the TrackSource anonymous ID:
+
+```javascript
+// Get the anonymous ID
+const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id || '';
+
+// Add to Whop checkout URL
+const checkoutUrl = `https://whop.com/checkout/your-product?ts_anonymous_id=${tsAnonymousId}`;
+```
+
+### Method 2: Custom Landing Page
+
+Create a landing page that captures the anonymous ID before redirecting to Whop:
+
+```html
+<script>
+  // Store anonymous ID in localStorage
+  const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id;
+  if (tsAnonymousId) {
+    localStorage.setItem('ts_anonymous_id', tsAnonymousId);
+  }
+
+  // When user clicks buy, append to URL
+  document.querySelector('#buy-button').addEventListener('click', (e) => {
+    const storedId = localStorage.getItem('ts_anonymous_id');
+    const url = new URL(e.target.href);
+    if (storedId) {
+      url.searchParams.set('ts_anonymous_id', storedId);
+    }
+    window.location.href = url.toString();
+  });
+</script>
+
+<a id="buy-button" href="https://whop.com/checkout/your-product">Buy Now</a>
+```
+
+### Method 3: UTM Parameters
+
+Whop preserves UTM parameters in checkout. Add them to your links:
+
+```
+https://whop.com/checkout/your-product?utm_source=facebook&utm_medium=paid&utm_campaign=launch
+```
+
+## Payload Example
+
+When a membership becomes valid, TrackSource receives:
+
+```json
+{
+  "action": "membership.went_valid",
+  "data": {
+    "id": "mem_xxx",
+    "product": {
+      "id": "prod_xxx",
+      "name": "Premium Course Access"
+    },
+    "plan": {
+      "id": "plan_xxx",
+      "plan_type": "renewal",
+      "renewal_period": "month",
+      "initial_price": 4900
+    },
+    "user": {
+      "id": "user_xxx",
+      "email": "john@example.com",
+      "username": "johndoe"
+    },
+    "metadata": {
+      "ts_anonymous_id": "anon_abc123xyz"
+    },
+    "checkout_session": {
+      "utm_source": "facebook",
+      "utm_medium": "paid",
+      "utm_campaign": "launch"
+    }
+  }
+}
+```
+
+## Product Types
+
+TrackSource handles all Whop product types:
+
+### One-Time Products
+
+```
+Event: membership.went_valid
+→ Creates conversion event
+→ Full price attributed to source
+```
+
+### Subscriptions
+
+```
+Event: membership.went_valid
+→ Creates conversion event with initial payment
+
+Event: membership.renewed
+→ Creates recurring_payment event
+→ Adds to lifetime value
+```
+
+### Free Trials
+
+```
+Event: membership.went_valid (trial)
+→ Creates trial_started event
+→ $0 conversion value
+
+Event: membership.went_valid (converted)
+→ Creates conversion event
+→ First payment attributed
+```
+
+## Membership Lifecycle
+
+TrackSource tracks the full membership lifecycle:
+
+```
+Day 0:   Purchase              → conversion ($49)
+Day 30:  First Renewal         → recurring_payment ($49)
+Day 60:  Second Renewal        → recurring_payment ($49)
+Day 75:  Cancellation          → churn event
+─────────────────────────────────────────────────────
+Total LTV:                     $147
+```
+
+## Embedding Whop Checkout
+
+If you embed Whop checkout on your site:
+
+```html
+<!-- TrackSource Script -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+
+<!-- Whop Embed with TrackSource ID -->
+<script>
+  window.addEventListener('load', function() {
+    const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id || '';
+
+    // Update Whop checkout iframe URL
+    const whopFrame = document.querySelector('iframe[src*="whop.com"]');
+    if (whopFrame) {
+      const url = new URL(whopFrame.src);
+      url.searchParams.set('ts_anonymous_id', tsAnonymousId);
+      whopFrame.src = url.toString();
+    }
+  });
+</script>
+```
+
+## Multiple Products
+
+If you sell multiple products, TrackSource tracks each separately:
+
+```
+Product A: Premium Course ($997)
+  - Attributed to: Facebook Ads
+  - ROAS: 15x
+
+Product B: Coaching ($2,997)
+  - Attributed to: YouTube
+  - ROAS: 25x
+
+Product C: Membership ($49/mo)
+  - Attributed to: Instagram
+  - LTV: $294 (avg 6 months)
+```
+
+## Discord Integration
+
+If you use Whop with Discord:
+
+```
+Purchase → Whop Webhook → TrackSource → Attribution
+              ↓
+        Discord Role Added
+```
+
+The Discord integration doesn't affect tracking - TrackSource receives the purchase event directly from Whop.
+
+## Testing
+
+### Sandbox Mode
+
+1. Enable Whop sandbox in developer settings
+2. Create test purchases
+3. Verify webhooks in Whop developer logs
+4. Check events in TrackSource Live Events
+
+### Test Webhook
+
+Use the Whop webhook testing feature:
+
+1. Go to Developer → Webhooks
+2. Click on your webhook
+3. Click **Test** to send a sample payload
+4. Verify it appears in TrackSource
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Webhook not receiving events">
+    1. Check Whop webhook logs in Developer settings
+    2. Verify the endpoint URL is correct
+    3. Ensure you selected the required events
+    4. Check if webhook is active (not disabled)
+  </Accordion>
+
+  <Accordion title="Purchase not attributed">
+    1. Verify the customer email matches a previous lead
+    2. Check if ts_anonymous_id was passed in checkout
+    3. Ensure UTM parameters are in the checkout URL
+    4. Look at the event timeline in TrackSource
+  </Accordion>
+
+  <Accordion title="Wrong revenue amount">
+    1. Whop sends prices in cents (4900 = $49.00)
+    2. TrackSource automatically converts
+    3. Check the plan price in Whop dashboard
+  </Accordion>
+
+  <Accordion title="Missing recurring payments">
+    1. Ensure `membership.renewed` event is selected
+    2. Check Whop webhook logs for delivery
+    3. Verify subscription is active and renewing
+  </Accordion>
+</AccordionGroup>
+
+## API Integration Alternative
+
+If you can't use webhooks, send purchase events via API:
+
+```javascript
+// After Whop purchase confirmation
+await fetch('https://events.tracksource.io/v1/events', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Tenant-ID': 'YOUR_TENANT_ID'
+  },
+  body: JSON.stringify({
+    event_type: 'conversion',
+    user_id: customer.email,
+    properties: {
+      email: customer.email,
+      conversion_value: membership.plan.initial_price / 100,
+      currency: 'USD',
+      order_id: membership.id,
+      product_name: membership.product.name,
+      payment_provider: 'whop'
+    }
+  })
+});
+```
+
+## Revenue Analytics
+
+After connecting Whop, view your revenue in TrackSource:
+
+### By Product
+
+See which products generate the most revenue:
+
+```
+Premium Course:     $45,000 (45 sales)
+Coaching Program:   $30,000 (10 sales)
+Monthly Membership: $25,000 (500 MRR)
+```
+
+### By Source
+
+See which channels drive the most revenue:
+
+```
+Facebook Ads:  $60,000 (ROAS: 12x)
+YouTube:       $25,000 (ROAS: 25x)
+Instagram:     $15,000 (ROAS: 8x)
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="View Analytics" icon="chart-line" href="/api-reference/analytics/overview">
+    Query revenue data via API
+  </Card>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Send purchases to Facebook for optimization
+  </Card>
+</CardGroup>

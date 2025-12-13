@@ -1,0 +1,495 @@
+---
+title: 'Identify Users - TrackSource JavaScript SDK'
+sidebarTitle: 'Identify'
+description: 'Link anonymous visitors to known user identities with the TrackSource JavaScript SDK. Enable cross-device tracking and complete customer journeys.'
+icon: 'user'
+og:title: 'User Identification with TrackSource SDK'
+og:description: 'Connect anonymous browsing sessions to known customer identities for complete marketing attribution.'
+---
+
+# Identifying Users
+
+Link anonymous visitors to known user identities to build complete customer journeys across sessions and devices.
+
+## How It Works
+
+```
+Before Identify                      After Identify
+────────────────                     ───────────────
+Anonymous ID: anon_abc123            Anonymous ID: anon_abc123
+Email: (unknown)                     Email: john@example.com
+Sessions: 1                    →     Sessions: 3 (linked)
+Touchpoints: Facebook Ad             Touchpoints: Facebook Ad
+                                                  Google Search
+                                                  Direct Visit
+```
+
+## Basic Identification
+
+Call `identify` when you learn who the user is:
+
+```javascript
+ts.identify('john@example.com');
+```
+
+With additional properties:
+
+```javascript
+ts.identify('john@example.com', {
+  name: 'John Doe',
+  phone: '+1234567890',
+  company: 'Acme Inc'
+});
+```
+
+## When to Identify
+
+### Form Submission
+
+```javascript
+document.querySelector('#signup-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+  const email = formData.get('email');
+  const name = formData.get('name');
+
+  // Identify the user
+  ts.identify(email, {
+    name: name,
+    signup_source: 'website'
+  });
+
+  // Also track the form submission
+  ts.track('form_submit', {
+    form_id: 'signup'
+  });
+});
+```
+
+### After Login
+
+```javascript
+async function handleLogin(email, password) {
+  const user = await api.login(email, password);
+
+  // Identify on successful login
+  ts.identify(user.email, {
+    user_id: user.id,
+    name: user.name,
+    plan: user.plan
+  });
+}
+```
+
+### After Registration
+
+```javascript
+async function handleRegister(formData) {
+  const user = await api.register(formData);
+
+  ts.identify(user.email, {
+    user_id: user.id,
+    name: user.name,
+    signup_date: new Date().toISOString()
+  });
+
+  ts.track('signup', {
+    method: 'email'
+  });
+}
+```
+
+### Newsletter Signup
+
+```javascript
+async function subscribeToNewsletter(email) {
+  await api.subscribe(email);
+
+  ts.identify(email, {
+    subscriber: true,
+    subscribed_at: new Date().toISOString()
+  });
+
+  ts.track('newsletter_subscribe');
+}
+```
+
+## User ID vs Email
+
+You can identify by user ID instead of email:
+
+```javascript
+// Using email (most common)
+ts.identify('john@example.com');
+
+// Using user ID
+ts.identify('user_12345', {
+  email: 'john@example.com'
+});
+```
+
+<Note>
+  If using a user ID, always include the email in properties for proper identity resolution.
+</Note>
+
+## Properties
+
+Include any properties relevant to the user:
+
+```javascript
+ts.identify('john@example.com', {
+  // Contact info
+  name: 'John Doe',
+  first_name: 'John',
+  last_name: 'Doe',
+  phone: '+1234567890',
+
+  // Account info
+  user_id: 'user_12345',
+  created_at: '2024-01-15T10:30:00Z',
+  plan: 'pro',
+
+  // Company info
+  company: 'Acme Inc',
+  company_size: '10-50',
+  industry: 'Technology',
+
+  // Custom properties
+  role: 'Marketing Manager',
+  referral_source: 'friend'
+});
+```
+
+### Reserved Properties
+
+These properties have special meaning:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `email` | string | Primary identifier |
+| `phone` | string | Used for identity resolution |
+| `name` | string | Display name |
+| `user_id` | string | Your internal user ID |
+| `created_at` | string | Account creation timestamp |
+
+## Multiple Identities
+
+When a user has multiple emails or identities:
+
+```javascript
+// Primary identification
+ts.identify('john@personal.com');
+
+// Link additional email
+ts.identify('john@work.com', {
+  primary_email: 'john@personal.com'
+});
+```
+
+TrackSource will merge these into a single customer profile.
+
+## Phone Number Identification
+
+Phone numbers are powerful for identity resolution:
+
+```javascript
+ts.identify('john@example.com', {
+  phone: '+14155551234'
+});
+```
+
+If another session uses the same phone with a different email:
+
+```javascript
+// Different email, same phone
+ts.identify('john.doe@company.com', {
+  phone: '+14155551234'  // Same phone
+});
+
+// TrackSource links both emails to the same person
+```
+
+## Anonymous to Known
+
+The typical user journey:
+
+```javascript
+// 1. User visits (anonymous)
+//    TrackSource assigns: anon_abc123
+//    Tracks: Facebook ad click, page views
+
+// 2. User returns via Google (still anonymous)
+//    Same anonymous ID (via cookie)
+//    Tracks: Google search click, page views
+
+// 3. User fills form (becomes known)
+ts.identify('john@example.com', {
+  name: 'John Doe'
+});
+//    Links: anon_abc123 → john@example.com
+//    Full journey now visible:
+//    - Facebook Ad → Google Search → Form Submit
+
+// 4. User makes purchase (attributed)
+ts.track('conversion', {
+  conversion_value: 997
+});
+//    Facebook gets attribution credit (first touch)
+```
+
+## React Integration
+
+### Identify Hook
+
+```jsx
+import { useCallback } from 'react';
+
+function useIdentify() {
+  return useCallback((userId, properties) => {
+    if (window.ts) {
+      window.ts.identify(userId, properties);
+    }
+  }, []);
+}
+
+// Usage
+function LoginForm() {
+  const identify = useIdentify();
+
+  const handleLogin = async (email, password) => {
+    const user = await login(email, password);
+
+    identify(user.email, {
+      name: user.name,
+      user_id: user.id
+    });
+  };
+
+  return (/* form JSX */);
+}
+```
+
+### Auth Context
+
+```jsx
+import { createContext, useContext, useEffect } from 'react';
+
+const AuthContext = createContext();
+
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (user && window.ts) {
+      window.ts.identify(user.email, {
+        name: user.name,
+        user_id: user.id
+      });
+    }
+  }, [user]);
+
+  return (
+    <AuthContext.Provider value={{ user, setUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+```
+
+## Next.js Integration
+
+```tsx
+// hooks/useTrackSource.ts
+'use client';
+
+import { useEffect } from 'react';
+
+export function useIdentifyUser(user: { email: string; name: string } | null) {
+  useEffect(() => {
+    if (user && typeof window !== 'undefined' && window.ts) {
+      window.ts.identify(user.email, {
+        name: user.name
+      });
+    }
+  }, [user]);
+}
+
+// In a component
+function DashboardLayout({ children }) {
+  const { user } = useUser(); // Your auth hook
+
+  useIdentifyUser(user);
+
+  return <>{children}</>;
+}
+```
+
+## Server-Side Identification
+
+For server-rendered pages or API routes:
+
+```javascript
+// API route
+app.post('/api/login', async (req, res) => {
+  const user = await authenticate(req.body);
+
+  // Identify via API
+  await fetch('https://events.tracksource.io/v1/identify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+    },
+    body: JSON.stringify({
+      user_id: user.email,
+      anonymous_id: req.cookies.ts_anonymous_id,
+      properties: {
+        name: user.name,
+        user_id: user.id
+      }
+    })
+  });
+
+  res.json({ success: true });
+});
+```
+
+## Reset Identity
+
+When a user logs out:
+
+```javascript
+function handleLogout() {
+  // Reset TrackSource identity
+  ts.reset();
+
+  // Your logout logic
+  api.logout();
+}
+```
+
+This:
+- Generates a new anonymous ID
+- Clears user properties
+- Starts a fresh session
+
+## Deferred Identification
+
+Sometimes you get user info after form submission (e.g., from webhook):
+
+```javascript
+// Client-side: capture anonymous ID
+const anonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id;
+
+// Send to your backend
+await fetch('/api/signup', {
+  method: 'POST',
+  body: JSON.stringify({
+    email: 'john@example.com',
+    ts_anonymous_id: anonymousId
+  })
+});
+```
+
+```javascript
+// Server-side: identify later
+await fetch('https://events.tracksource.io/v1/identify', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID
+  },
+  body: JSON.stringify({
+    user_id: 'john@example.com',
+    anonymous_id: req.body.ts_anonymous_id,
+    properties: {
+      name: 'John Doe'
+    }
+  })
+});
+```
+
+## Identity Resolution
+
+TrackSource uses multiple signals to resolve identity:
+
+```
+Identity Resolution Priority
+────────────────────────────
+1. ts_anonymous_id (cookie)     → 100% match
+2. Email                        → 100% match
+3. Phone                        → 100% match
+4. Facebook Browser ID (fbp)    → 95% match
+5. IP + User Agent              → 70% match
+```
+
+### Cross-Device
+
+When a user logs in on a new device:
+
+```
+Device A (Desktop)              Device B (Mobile)
+──────────────────              ─────────────────
+anon_abc123                     anon_xyz789
+john@example.com                john@example.com
+       ↓                              ↓
+       └──────────── Merged ──────────┘
+                       ↓
+              Single Customer Profile
+              - 2 devices
+              - All sessions combined
+              - Complete journey
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="User not identified">
+    1. Check browser console for errors
+    2. Verify `ts` object is available
+    3. Check network tab for identify request
+    4. Ensure email format is valid
+  </Accordion>
+
+  <Accordion title="Sessions not merging">
+    1. Verify same email is used
+    2. Check cookies are enabled
+    3. Allow time for server processing
+    4. Check customer profile in dashboard
+  </Accordion>
+
+  <Accordion title="Wrong user identified">
+    1. Call `ts.reset()` on logout
+    2. Ensure new identification on login
+    3. Don't identify with shared/test emails
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Identify Early" icon="clock">
+    Identify as soon as you have the email - don't wait for conversion
+  </Card>
+  <Card title="Always Include Email" icon="envelope">
+    When using user IDs, always include email in properties
+  </Card>
+  <Card title="Reset on Logout" icon="right-from-bracket">
+    Call `ts.reset()` when users log out to prevent cross-user tracking
+  </Card>
+  <Card title="Include Phone" icon="phone">
+    Phone numbers significantly improve cross-session matching
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Track Events" icon="bolt" href="/sdks/javascript/tracking">
+    Track conversions and custom events
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Server-side identification
+  </Card>
+</CardGroup>

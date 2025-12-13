@@ -1,0 +1,241 @@
+---
+title: 'Quickstart - Get Started with TrackSource in 5 Minutes'
+sidebarTitle: 'Quickstart'
+description: 'Set up TrackSource marketing attribution in 5 minutes. Install the tracking script, configure webhooks, and start seeing which ads drive your revenue.'
+icon: 'rocket'
+og:title: 'TrackSource Quickstart Guide | 5-Minute Setup'
+og:description: 'Install TrackSource tracking in minutes. One script tag, one webhook URL, and you are tracking every customer touchpoint.'
+---
+
+# Quickstart Guide
+
+Get TrackSource running on your website in under 5 minutes. By the end of this guide, you'll be tracking every visitor, lead, and conversion.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A TrackSource account ([Sign up here](https://app.tracksource.io/signup))
+- Access to your website's HTML or a tag manager
+- Your form provider credentials (Tally, Typeform, etc.)
+
+## Step 1: Get Your Tenant ID
+
+<Steps>
+  <Step title="Log into TrackSource">
+    Go to [app.tracksource.io](https://app.tracksource.io) and sign in
+  </Step>
+  <Step title="Find Your Tenant ID">
+    Navigate to **Settings** → **General**. Your Tenant ID is displayed at the top.
+  </Step>
+  <Step title="Copy the ID">
+    Click the copy button next to your Tenant ID. You'll need this for the next steps.
+  </Step>
+</Steps>
+
+## Step 2: Install the Tracking Script
+
+Add the TrackSource script to every page of your website. Place it in the `<head>` section:
+
+```html
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+<Warning>
+  Replace `YOUR_TENANT_ID` with your actual Tenant ID from Step 1.
+</Warning>
+
+### Platform-Specific Instructions
+
+<Tabs>
+  <Tab title="WordPress">
+    1. Go to **Appearance** → **Theme Editor**
+    2. Open `header.php`
+    3. Paste the script before `</head>`
+    4. Save changes
+
+    Or use a plugin like **Insert Headers and Footers**.
+  </Tab>
+  <Tab title="Shopify">
+    1. Go to **Online Store** → **Themes**
+    2. Click **Actions** → **Edit code**
+    3. Open `theme.liquid`
+    4. Paste the script in the `<head>` section
+    5. Save
+  </Tab>
+  <Tab title="Webflow">
+    1. Go to **Project Settings** → **Custom Code**
+    2. Paste the script in **Head Code**
+    3. Publish your site
+  </Tab>
+  <Tab title="Next.js">
+    ```jsx
+    // app/layout.tsx or pages/_app.tsx
+    import Script from 'next/script'
+
+    export default function RootLayout({ children }) {
+      return (
+        <html>
+          <head>
+            <Script
+              id="tracksource"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `
+                  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+                  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+                  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+                  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+                  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+                `,
+              }}
+            />
+          </head>
+          <body>{children}</body>
+        </html>
+      )
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Step 3: Configure Form Webhooks
+
+Connect your form provider to TrackSource to capture leads automatically.
+
+### Universal Webhook URL
+
+Your webhook URL follows this pattern:
+
+```
+https://events.tracksource.io/webhooks/{provider}/YOUR_TENANT_ID
+```
+
+### Supported Form Providers
+
+<CardGroup cols={2}>
+  <Card title="Tally" icon="square-check" href="/webhooks/tally">
+    ```
+    https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
+    ```
+  </Card>
+  <Card title="Typeform" icon="t" href="/webhooks/typeform">
+    ```
+    https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
+    ```
+  </Card>
+  <Card title="Calendly" icon="calendar" href="/webhooks/calendly">
+    ```
+    https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID
+    ```
+  </Card>
+  <Card title="HubSpot" icon="hubspot" href="/webhooks/hubspot">
+    ```
+    https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
+    ```
+  </Card>
+</CardGroup>
+
+<Info>
+  See the [Form Providers](/webhooks/overview) section for detailed setup instructions for each provider.
+</Info>
+
+## Step 4: Add Hidden Fields (Recommended)
+
+To ensure accurate attribution, add hidden fields to your forms that capture the TrackSource anonymous ID.
+
+### For Tally Forms
+
+Add a hidden field with the ID `ts_anonymous_id`. TrackSource will automatically populate it.
+
+### For Custom Forms
+
+```html
+<form>
+  <!-- Your form fields -->
+  <input type="hidden" name="ts_anonymous_id" id="ts_anonymous_id" />
+
+  <script>
+    // Auto-populate the hidden field
+    document.getElementById('ts_anonymous_id').value =
+      window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id || '';
+  </script>
+</form>
+```
+
+## Step 5: Verify Installation
+
+<Steps>
+  <Step title="Open Your Website">
+    Visit your website in a new browser tab
+  </Step>
+  <Step title="Check the Console">
+    Open Developer Tools (F12) and look for `[TrackSource] Initialized`
+  </Step>
+  <Step title="View Live Events">
+    Go to your TrackSource dashboard → **Analytics** → **Live Events**
+  </Step>
+  <Step title="Submit a Test Form">
+    Fill out one of your forms and verify the lead appears in your dashboard
+  </Step>
+</Steps>
+
+## Step 6: Connect Ad Platforms (Optional)
+
+To send conversions back to your ad platforms:
+
+<CardGroup cols={2}>
+  <Card title="Facebook CAPI" icon="meta" href="/attribution/facebook-capi">
+    Server-side conversion tracking for Facebook Ads
+  </Card>
+  <Card title="Google Ads" icon="google" href="/attribution/google-ads">
+    Offline conversion import for Google Ads
+  </Card>
+</CardGroup>
+
+## What's Next?
+
+<CardGroup cols={3}>
+  <Card title="Track Custom Events" icon="bolt" href="/sdks/javascript/tracking">
+    Learn how to track purchases, signups, and custom events
+  </Card>
+  <Card title="Attribution Models" icon="chart-pie" href="/attribution/models">
+    Understand first-touch, last-touch, and multi-touch attribution
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Query your data programmatically
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Script not loading">
+    - Check that your Tenant ID is correct
+    - Ensure the script is in the `<head>` section
+    - Verify no ad blockers are preventing the script from loading
+    - Check browser console for errors
+  </Accordion>
+
+  <Accordion title="Events not appearing in dashboard">
+    - Wait 30 seconds after page load
+    - Check that you're looking at the correct time range
+    - Verify your Tenant ID matches between script and dashboard
+  </Accordion>
+
+  <Accordion title="Form submissions not tracking">
+    - Verify the webhook URL is correct
+    - Check that your form provider's webhook is enabled
+    - Look for errors in your form provider's webhook logs
+  </Accordion>
+</AccordionGroup>
+
+<Card title="Need Help?" icon="headset" href="mailto:support@tracksource.io">
+  Contact our support team at support@tracksource.io
+</Card>

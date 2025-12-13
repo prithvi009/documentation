@@ -1,0 +1,457 @@
+---
+title: 'Track Events - TrackSource JavaScript SDK'
+sidebarTitle: 'Tracking Events'
+description: 'Track custom events with the TrackSource JavaScript SDK. Track conversions, button clicks, form submissions, and any custom events.'
+icon: 'bolt'
+og:title: 'Track Events with TrackSource SDK'
+og:description: 'Learn to track purchases, form submissions, button clicks, and custom events for complete marketing attribution.'
+---
+
+# Tracking Events
+
+Track custom events with the TrackSource JavaScript SDK to capture every meaningful interaction on your website.
+
+## Basic Event Tracking
+
+```javascript
+ts.track('event_name', {
+  property1: 'value1',
+  property2: 'value2'
+});
+```
+
+### Example: Button Click
+
+```javascript
+document.querySelector('#cta-button').addEventListener('click', () => {
+  ts.track('button_click', {
+    button_id: 'cta-button',
+    button_text: 'Get Started',
+    page: window.location.pathname
+  });
+});
+```
+
+## Standard Events
+
+TrackSource recognizes these standard events for attribution and ad platform integration:
+
+### Page View
+
+Tracked automatically, but can be called manually:
+
+```javascript
+ts.track('page_view', {
+  page: '/pricing',
+  title: 'Pricing - Your Company'
+});
+```
+
+### Lead
+
+When a visitor becomes a lead:
+
+```javascript
+ts.track('lead', {
+  email: 'john@example.com',
+  name: 'John Doe',
+  lead_source: 'contact_form'
+});
+```
+
+### Conversion
+
+When a purchase or conversion occurs:
+
+```javascript
+ts.track('conversion', {
+  conversion_value: 997.00,
+  currency: 'USD',
+  order_id: 'order_123',
+  product_name: 'Premium Course'
+});
+```
+
+### Add to Cart
+
+When a product is added to cart:
+
+```javascript
+ts.track('add_to_cart', {
+  product_id: 'prod_123',
+  product_name: 'Premium Course',
+  price: 997.00,
+  currency: 'USD'
+});
+```
+
+### Checkout Started
+
+When checkout begins:
+
+```javascript
+ts.track('checkout_started', {
+  cart_value: 997.00,
+  currency: 'USD',
+  items: [
+    { product_id: 'prod_123', name: 'Premium Course', price: 997 }
+  ]
+});
+```
+
+### Form Submit
+
+When any form is submitted:
+
+```javascript
+ts.track('form_submit', {
+  form_id: 'newsletter',
+  form_name: 'Newsletter Signup'
+});
+```
+
+## Event Properties
+
+Include any properties you want to track:
+
+```javascript
+ts.track('video_watched', {
+  video_id: 'intro_video',
+  video_title: 'Introduction to Marketing',
+  duration: 120,
+  percent_watched: 75,
+  auto_played: false
+});
+```
+
+### Reserved Properties
+
+These properties have special meaning:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `email` | string | User's email address |
+| `phone` | string | User's phone number |
+| `name` | string | User's name |
+| `conversion_value` | number | Revenue value |
+| `currency` | string | Currency code (USD, EUR, etc.) |
+| `order_id` | string | Unique order identifier |
+
+## Tracking Purchases
+
+### One-Time Purchase
+
+```javascript
+ts.track('conversion', {
+  email: 'customer@example.com',
+  conversion_value: 997.00,
+  currency: 'USD',
+  order_id: 'order_abc123',
+  product_name: 'Premium Course',
+  product_id: 'prod_123',
+  quantity: 1
+});
+```
+
+### Subscription
+
+```javascript
+ts.track('conversion', {
+  email: 'customer@example.com',
+  conversion_value: 49.00,
+  currency: 'USD',
+  order_id: 'sub_abc123',
+  subscription_id: 'sub_abc123',
+  plan_name: 'Pro Monthly',
+  plan_interval: 'month'
+});
+```
+
+### Multiple Items
+
+```javascript
+ts.track('conversion', {
+  email: 'customer@example.com',
+  conversion_value: 1497.00,
+  currency: 'USD',
+  order_id: 'order_abc123',
+  items: [
+    {
+      product_id: 'prod_123',
+      name: 'Premium Course',
+      price: 997.00,
+      quantity: 1
+    },
+    {
+      product_id: 'prod_456',
+      name: 'Workbook',
+      price: 500.00,
+      quantity: 1
+    }
+  ]
+});
+```
+
+## Tracking Forms
+
+### Contact Form
+
+```javascript
+document.querySelector('#contact-form').addEventListener('submit', (e) => {
+  const formData = new FormData(e.target);
+
+  ts.track('form_submit', {
+    form_id: 'contact',
+    email: formData.get('email'),
+    name: formData.get('name'),
+    message_length: formData.get('message').length
+  });
+});
+```
+
+### Lead Capture Form
+
+```javascript
+document.querySelector('#lead-form').addEventListener('submit', (e) => {
+  const formData = new FormData(e.target);
+
+  ts.track('lead', {
+    email: formData.get('email'),
+    name: formData.get('name'),
+    phone: formData.get('phone'),
+    company: formData.get('company'),
+    lead_source: 'website_form'
+  });
+});
+```
+
+## Tracking User Engagement
+
+### Video Plays
+
+```javascript
+video.addEventListener('play', () => {
+  ts.track('video_play', {
+    video_id: 'hero_video',
+    video_title: 'Product Demo'
+  });
+});
+
+video.addEventListener('ended', () => {
+  ts.track('video_complete', {
+    video_id: 'hero_video',
+    video_title: 'Product Demo',
+    duration: video.duration
+  });
+});
+```
+
+### Scroll Depth
+
+```javascript
+let scrollMilestones = [25, 50, 75, 100];
+let tracked = [];
+
+window.addEventListener('scroll', () => {
+  const scrollPercent = Math.round(
+    (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
+  );
+
+  scrollMilestones.forEach(milestone => {
+    if (scrollPercent >= milestone && !tracked.includes(milestone)) {
+      ts.track('scroll_depth', {
+        depth: milestone,
+        page: window.location.pathname
+      });
+      tracked.push(milestone);
+    }
+  });
+});
+```
+
+### Time on Page
+
+```javascript
+let startTime = Date.now();
+
+window.addEventListener('beforeunload', () => {
+  const timeOnPage = Math.round((Date.now() - startTime) / 1000);
+
+  ts.track('page_exit', {
+    page: window.location.pathname,
+    time_on_page: timeOnPage
+  });
+});
+```
+
+## Tracking Clicks
+
+### Link Clicks
+
+```javascript
+document.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    ts.track('link_click', {
+      link_url: e.target.href,
+      link_text: e.target.textContent,
+      link_type: e.target.hostname === window.location.hostname
+        ? 'internal'
+        : 'external'
+    });
+  });
+});
+```
+
+### CTA Buttons
+
+```javascript
+document.querySelectorAll('[data-track-cta]').forEach(button => {
+  button.addEventListener('click', () => {
+    ts.track('cta_click', {
+      cta_id: button.dataset.trackCta,
+      cta_text: button.textContent,
+      page: window.location.pathname
+    });
+  });
+});
+```
+
+## Async Tracking
+
+All tracking calls are asynchronous. To wait for completion:
+
+```javascript
+// Track and wait
+await ts.track('conversion', {
+  conversion_value: 997.00
+});
+
+// Now navigate
+window.location.href = '/thank-you';
+```
+
+Or use callback:
+
+```javascript
+ts.track('conversion', {
+  conversion_value: 997.00
+}, () => {
+  window.location.href = '/thank-you';
+});
+```
+
+## Batching Events
+
+Events are automatically batched for performance. For immediate sending:
+
+```javascript
+ts.track('conversion', {
+  conversion_value: 997.00
+}, { immediate: true });
+```
+
+## Error Handling
+
+```javascript
+try {
+  await ts.track('conversion', {
+    conversion_value: 997.00
+  });
+  console.log('Event tracked successfully');
+} catch (error) {
+  console.error('Failed to track event:', error);
+}
+```
+
+## React Examples
+
+### useTrack Hook
+
+```jsx
+import { useCallback } from 'react';
+
+function useTrack() {
+  return useCallback((eventName, properties) => {
+    if (window.ts) {
+      window.ts.track(eventName, properties);
+    }
+  }, []);
+}
+
+// Usage
+function ProductPage() {
+  const track = useTrack();
+
+  const handleAddToCart = () => {
+    track('add_to_cart', {
+      product_id: 'prod_123',
+      price: 997
+    });
+  };
+
+  return <button onClick={handleAddToCart}>Add to Cart</button>;
+}
+```
+
+### Component Tracking
+
+```jsx
+import { useEffect } from 'react';
+
+function ProductView({ product }) {
+  useEffect(() => {
+    if (window.ts) {
+      window.ts.track('product_view', {
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price
+      });
+    }
+  }, [product]);
+
+  return <div>{/* Product details */}</div>;
+}
+```
+
+## Event Naming Conventions
+
+Follow these conventions for consistent tracking:
+
+| Format | Example | Use Case |
+|--------|---------|----------|
+| `noun_verb` | `button_click` | User actions |
+| `noun_state` | `form_submitted` | State changes |
+| `category_action` | `cart_updated` | Feature-specific |
+
+### Best Practices
+
+- Use **snake_case** for event names
+- Be **specific** but not overly detailed
+- Use **consistent** naming across your site
+- Include **relevant context** in properties
+
+## Debugging Events
+
+Enable debug mode to see all tracked events:
+
+```javascript
+window.tsConfig = { debug: true };
+```
+
+Console will show:
+
+```
+[TrackSource] Event tracked: button_click
+  Properties: { button_id: 'cta', page: '/pricing' }
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Identify Users" icon="user" href="/sdks/javascript/identify">
+    Link anonymous users to known identities
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/events/track">
+    Server-side event tracking
+  </Card>
+</CardGroup>
