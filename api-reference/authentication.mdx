@@ -1,11 +1,11 @@
 ---
 title: Authentication
-description: 'How to authenticate with the TracksSource API'
+description: 'How to authenticate with the TrackSource API'
 ---
 
 ## Tenant ID
 
-TracksSource uses a **Tenant ID** for authentication. This is a unique identifier for your account.
+TrackSource uses a **Tenant ID** for authentication. This is a unique identifier for your account.
 
 ### Finding Your Tenant ID
 
@@ -39,7 +39,7 @@ https://events.tracksource.io/leads/YOUR_TENANT_ID
     The JavaScript SDK handles authentication automatically:
 
     ```javascript
-    TracksSource('init', 'your_tenant_id');
+    TrackSource('init', 'your_tenant_id');
     ```
 
     The Tenant ID is embedded in client-side code and is **public**. This is safe because:
@@ -73,7 +73,7 @@ https://events.tracksource.io/leads/YOUR_TENANT_ID
 
 <CardGroup cols={2}>
   <Card title="Validate Server-Side" icon="shield-check">
-    For sensitive events like purchases, validate on your server before sending to TracksSource
+    For sensitive events like purchases, validate on your server before sending to TrackSource
   </Card>
   <Card title="Use Environment Variables" icon="key">
     Never hardcode your Tenant ID in server-side code

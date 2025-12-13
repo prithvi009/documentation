@@ -1,6 +1,6 @@
 ---
 title: Next.js Integration
-description: 'TracksSource setup for Next.js applications'
+description: 'TrackSource setup for Next.js applications'
 ---
 
 ## Installation
@@ -14,12 +14,12 @@ npm install @tracksource/react
 ### 1. Create a Client Provider
 
 ```tsx
-// components/providers/TracksSourceProvider.tsx
+// components/providers/TrackSourceProvider.tsx
 'use client';
 
-import { TracksSourceProvider as TSProvider } from '@tracksource/react';
+import { TrackSourceProvider as TSProvider } from '@tracksource/react';
 
-export function TracksSourceProvider({ children }: { children: React.ReactNode }) {
+export function TrackSourceProvider({ children }: { children: React.ReactNode }) {
   return (
     <TSProvider
       tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}
@@ -38,7 +38,7 @@ export function TracksSourceProvider({ children }: { children: React.ReactNode }
 
 ```tsx
 // app/layout.tsx
-import { TracksSourceProvider } from '@/components/providers/TracksSourceProvider';
+import { TrackSourceProvider } from '@/components/providers/TrackSourceProvider';
 
 export default function RootLayout({
   children,
@@ -48,9 +48,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <TracksSourceProvider>
+        <TrackSourceProvider>
           {children}
-        </TracksSourceProvider>
+        </TrackSourceProvider>
       </body>
     </html>
   );
@@ -63,10 +63,10 @@ export default function RootLayout({
 // components/PurchaseButton.tsx
 'use client';
 
-import { useTracksSource } from '@tracksource/react';
+import { useTrackSource } from '@tracksource/react';
 
 export function PurchaseButton({ product }) {
-  const { track } = useTracksSource();
+  const { track } = useTrackSource();
 
   const handleClick = () => {
     track('purchase', {
@@ -86,14 +86,14 @@ export function PurchaseButton({ product }) {
 
 ```tsx
 // pages/_app.tsx
-import { TracksSourceProvider } from '@tracksource/react';
+import { TrackSourceProvider } from '@tracksource/react';
 import type { AppProps } from 'next/app';
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+    <TrackSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
       <Component {...pageProps} />
-    </TracksSourceProvider>
+    </TrackSourceProvider>
   );
 }
 ```
@@ -104,11 +104,11 @@ export default function App({ Component, pageProps }: AppProps) {
 // pages/_app.tsx
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { TracksSourceProvider, useTracksSource } from '@tracksource/react';
+import { TrackSourceProvider, useTrackSource } from '@tracksource/react';
 
 function PageViewTracker() {
   const router = useRouter();
-  const { page } = useTracksSource();
+  const { page } = useTrackSource();
 
   useEffect(() => {
     const handleRouteChange = (url: string) => {
@@ -126,10 +126,10 @@ function PageViewTracker() {
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+    <TrackSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
       <PageViewTracker />
       <Component {...pageProps} />
-    </TracksSourceProvider>
+    </TrackSourceProvider>
   );
 }
 ```
@@ -254,20 +254,20 @@ export default function SignupPage() {
 
 ## Vercel Analytics Integration
 
-TracksSource works alongside Vercel Analytics:
+TrackSource works alongside Vercel Analytics:
 
 ```tsx
 // app/layout.tsx
 import { Analytics } from '@vercel/analytics/react';
-import { TracksSourceProvider } from '@/components/providers/TracksSourceProvider';
+import { TrackSourceProvider } from '@/components/providers/TrackSourceProvider';
 
 export default function RootLayout({ children }) {
   return (
     <html>
       <body>
-        <TracksSourceProvider>
+        <TrackSourceProvider>
           {children}
-        </TracksSourceProvider>
+        </TrackSourceProvider>
         <Analytics />
       </body>
     </html>

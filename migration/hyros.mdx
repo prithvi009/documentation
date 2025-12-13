@@ -1,15 +1,15 @@
 ---
 title: 'Migrate from Hyros'
-description: 'Step-by-step guide to migrate from Hyros to TracksSource'
+description: 'Step-by-step guide to migrate from Hyros to TrackSource'
 ---
 
-# Migrating from Hyros to TracksSource
+# Migrating from Hyros to TrackSource
 
-This guide walks you through migrating your tracking setup from Hyros to TracksSource. TracksSource offers similar functionality with more transparent pricing, better performance, and full data ownership.
+This guide walks you through migrating your tracking setup from Hyros to TrackSource. TrackSource offers similar functionality with more transparent pricing, better performance, and full data ownership.
 
 ## Why Migrate?
 
-| Feature | Hyros | TracksSource |
+| Feature | Hyros | TrackSource |
 |---------|-------|--------------|
 | **Pricing** | $199-999+/mo | $49/mo |
 | **Data Ownership** | Their servers | Your data |
@@ -22,11 +22,11 @@ This guide walks you through migrating your tracking setup from Hyros to TracksS
 ## Migration Overview
 
 <Steps>
-  <Step title="Install TracksSource Script">
-    Replace Hyros tracking script with TracksSource
+  <Step title="Install TrackSource Script">
+    Replace Hyros tracking script with TrackSource
   </Step>
   <Step title="Update Form Integrations">
-    Redirect webhooks to TracksSource
+    Redirect webhooks to TrackSource
   </Step>
   <Step title="Configure Ad Platform Connections">
     Set up Facebook CAPI and Google Ads
@@ -47,9 +47,9 @@ Find and remove the Hyros tracking script from your website:
 <script src="https://t.hyros.com/v1/lst/universal-script?ph=YOUR_HYROS_ID"></script>
 ```
 
-### Add TracksSource Script
+### Add TrackSource Script
 
-Replace it with the TracksSource tracking script:
+Replace it with the TrackSource tracking script:
 
 ```html
 <script>
@@ -62,7 +62,7 @@ Replace it with the TracksSource tracking script:
 ```
 
 <Note>
-  Replace `YOUR_TENANT_ID` with your TracksSource tenant ID from the dashboard.
+  Replace `YOUR_TENANT_ID` with your TrackSource tenant ID from the dashboard.
 </Note>
 
 ## Step 2: Migrate Form Integrations
@@ -74,7 +74,7 @@ Replace it with the TracksSource tracking script:
 https://api.hyros.com/v1/webhook/tally/YOUR_HYROS_ID
 ```
 
-**TracksSource Webhook URL:**
+**TrackSource Webhook URL:**
 ```
 https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
 ```
@@ -82,7 +82,7 @@ https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
 Update in Tally:
 1. Go to your form settings
 2. Navigate to **Integrations** > **Webhooks**
-3. Replace the Hyros URL with the TracksSource URL
+3. Replace the Hyros URL with the TrackSource URL
 
 ### Typeform
 
@@ -91,7 +91,7 @@ Update in Tally:
 https://api.hyros.com/v1/webhook/typeform/YOUR_HYROS_ID
 ```
 
-**TracksSource Webhook URL:**
+**TrackSource Webhook URL:**
 ```
 https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
 ```
@@ -103,7 +103,7 @@ https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
 https://api.hyros.com/v1/webhook/calendly/YOUR_HYROS_ID
 ```
 
-**TracksSource Webhook URL:**
+**TrackSource Webhook URL:**
 ```
 https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID
 ```
@@ -115,7 +115,7 @@ https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID
 https://api.hyros.com/v1/webhook/hubspot/YOUR_HYROS_ID
 ```
 
-**TracksSource Webhook URL:**
+**TrackSource Webhook URL:**
 ```
 https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
 ```
@@ -124,16 +124,16 @@ https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
 
 ### Facebook Conversions API (CAPI)
 
-TracksSource supports direct Facebook CAPI integration, just like Hyros.
+TrackSource supports direct Facebook CAPI integration, just like Hyros.
 
 1. Go to **Settings** > **Integrations** > **Facebook**
 2. Click **Connect Facebook**
-3. Authorize TracksSource to access your ad account
+3. Authorize TrackSource to access your ad account
 4. Select your Pixel ID
 5. Enable server-side events
 
 <Info>
-  TracksSource sends events to Facebook in real-time, ensuring accurate attribution even with iOS 14+ restrictions.
+  TrackSource sends events to Facebook in real-time, ensuring accurate attribution even with iOS 14+ restrictions.
 </Info>
 
 ### Google Ads
@@ -154,10 +154,10 @@ If you're using Hyros custom events:
 hyros.track('Purchase', { value: 99.99 });
 ```
 
-### TracksSource Event Tracking
+### TrackSource Event Tracking
 
 ```javascript
-// TracksSource way
+// TrackSource way
 ts.track('conversion', {
   conversion_value: 99.99,
   currency: 'USD'
@@ -166,7 +166,7 @@ ts.track('conversion', {
 
 ### Event Mapping
 
-| Hyros Event | TracksSource Event |
+| Hyros Event | TrackSource Event |
 |-------------|-------------------|
 | `PageView` | `page_view` |
 | `Lead` | `lead` |
@@ -178,7 +178,7 @@ ts.track('conversion', {
 
 ### Check Events in Dashboard
 
-1. Open your TracksSource dashboard
+1. Open your TrackSource dashboard
 2. Navigate to **Analytics** > **Live Events**
 3. Verify events are coming through in real-time
 
@@ -191,7 +191,7 @@ ts.track('conversion', {
 
 ### Compare Attribution
 
-Run both Hyros and TracksSource in parallel for 1-2 weeks to validate attribution accuracy before fully switching.
+Run both Hyros and TrackSource in parallel for 1-2 weeks to validate attribution accuracy before fully switching.
 
 ## Feature Comparison
 
@@ -203,7 +203,7 @@ Run both Hyros and TracksSource in parallel for 1-2 weeks to validate attributio
 - Form provider webhooks
 - Customer journey tracking
 
-### What's Better in TracksSource
+### What's Better in TrackSource
 
 - **Real-time dashboard** - See events as they happen
 - **Full API access** - Query your data however you need
@@ -212,7 +212,7 @@ Run both Hyros and TracksSource in parallel for 1-2 weeks to validate attributio
 
 ### What's Different
 
-- **UI Layout** - TracksSource has a more modern, streamlined interface
+- **UI Layout** - TrackSource has a more modern, streamlined interface
 - **Terminology** - "Sources" instead of "Traffic Sources"
 - **Attribution Window** - Configurable (default 30 days)
 

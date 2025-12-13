@@ -1,6 +1,6 @@
 ---
 title: JavaScript SDK
-description: 'Install and configure the TracksSource JavaScript SDK'
+description: 'Install and configure the TrackSource JavaScript SDK'
 ---
 
 ## Installation
@@ -11,12 +11,12 @@ Add this snippet to your website's `<head>`:
 
 ```html
 <script>
-  !function(t,r,a,c,k,s){t.TracksSource=t.TracksSource||function(){
-  (t.TracksSource.q=t.TracksSource.q||[]).push(arguments)},
+  !function(t,r,a,c,k,s){t.TrackSource=t.TrackSource||function(){
+  (t.TrackSource.q=t.TrackSource.q||[]).push(arguments)},
   s=r.createElement("script"),s.async=1,s.src=a,
   r.head.appendChild(s)}(window,document,"https://cdn.tracksource.io/sdk.js");
 
-  TracksSource('init', 'YOUR_TENANT_ID');
+  TrackSource('init', 'YOUR_TENANT_ID');
 </script>
 ```
 
@@ -27,15 +27,15 @@ npm install @tracksource/sdk
 ```
 
 ```javascript
-import TracksSource from '@tracksource/sdk';
+import TrackSource from '@tracksource/sdk';
 
-TracksSource.init('YOUR_TENANT_ID');
+TrackSource.init('YOUR_TENANT_ID');
 ```
 
 ## Configuration Options
 
 ```javascript
-TracksSource('init', 'YOUR_TENANT_ID', {
+TrackSource('init', 'YOUR_TENANT_ID', {
   // Auto-track page views (default: true)
   trackPageViews: true,
 
@@ -68,16 +68,16 @@ TracksSource('init', 'YOUR_TENANT_ID', {
 
 ```javascript
 // Basic event
-TracksSource('track', 'button_click');
+TrackSource('track', 'button_click');
 
 // Event with properties
-TracksSource('track', 'signup', {
+TrackSource('track', 'signup', {
   plan: 'pro',
   source: 'pricing_page'
 });
 
 // Track with callback
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   revenue: 99.00,
   currency: 'USD'
 }, function() {
@@ -89,12 +89,12 @@ TracksSource('track', 'purchase', {
 
 ```javascript
 // Identify with email
-TracksSource('identify', {
+TrackSource('identify', {
   email: 'john@example.com'
 });
 
 // Full identification
-TracksSource('identify', {
+TrackSource('identify', {
   email: 'john@example.com',
   phone: '+1-555-123-4567',
   name: 'John Doe',
@@ -107,10 +107,10 @@ TracksSource('identify', {
 
 ```javascript
 // Manual page view (if auto-tracking is disabled)
-TracksSource('page');
+TrackSource('page');
 
 // Page view with custom properties
-TracksSource('page', {
+TrackSource('page', {
   category: 'docs',
   name: 'API Reference'
 });
@@ -120,8 +120,8 @@ TracksSource('page', {
 
 ```javascript
 // Get current attribution data
-TracksSource('ready', function() {
-  const data = TracksSource('getAttributionData');
+TrackSource('ready', function() {
+  const data = TrackSource('getAttributionData');
 
   console.log(data);
   // {
@@ -156,7 +156,7 @@ Use these standard event names for best compatibility with ad platforms:
 ### Purchase Event Example
 
 ```javascript
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   // Required
   email: 'customer@example.com',
   revenue: 149.00,
@@ -181,7 +181,7 @@ TracksSource('track', 'purchase', {
 ### Auto-Track Forms
 
 ```javascript
-TracksSource('init', 'YOUR_TENANT_ID', {
+TrackSource('init', 'YOUR_TENANT_ID', {
   trackForms: true
 });
 ```
@@ -213,8 +213,8 @@ Add these hidden fields to pass attribution data through form submissions:
 
 <script>
   // Auto-populate when SDK is ready
-  TracksSource('ready', function() {
-    const data = TracksSource('getAttributionData');
+  TrackSource('ready', function() {
+    const data = TrackSource('getAttributionData');
     document.querySelectorAll('.ts-field').forEach(field => {
       const key = field.dataset.ts;
       if (data[key]) field.value = data[key];
@@ -230,7 +230,7 @@ For single-page applications (React, Vue, Next.js):
 ```javascript
 // Track virtual page views on route change
 router.afterEach((to) => {
-  TracksSource('page', {
+  TrackSource('page', {
     path: to.path,
     name: to.name
   });
@@ -242,7 +242,7 @@ router.afterEach((to) => {
 Enable debug mode to see events in the console:
 
 ```javascript
-TracksSource('init', 'YOUR_TENANT_ID', {
+TrackSource('init', 'YOUR_TENANT_ID', {
   debug: true
 });
 ```
@@ -255,19 +255,19 @@ This will log all events and API responses to the browser console.
 
 ```javascript
 // Initialize without tracking
-TracksSource('init', 'YOUR_TENANT_ID', {
+TrackSource('init', 'YOUR_TENANT_ID', {
   autoTrack: false
 });
 
 // Enable tracking after consent
 function onUserConsent() {
-  TracksSource('enableTracking');
-  TracksSource('page'); // Track current page
+  TrackSource('enableTracking');
+  TrackSource('page'); // Track current page
 }
 
 // Disable tracking if consent revoked
 function onConsentRevoked() {
-  TracksSource('disableTracking');
+  TrackSource('disableTracking');
 }
 ```
 
@@ -275,16 +275,16 @@ function onConsentRevoked() {
 
 ```javascript
 // User opts out
-TracksSource('optOut');
+TrackSource('optOut');
 
 // User opts back in
-TracksSource('optIn');
+TrackSource('optIn');
 ```
 
 ## Error Handling
 
 ```javascript
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   revenue: 99.00
 }, {
   success: function(response) {

@@ -24,13 +24,13 @@ The **Conversions API** (CAPI) is Facebook's server-to-server event tracking sys
   </Card>
 </CardGroup>
 
-## How TracksSource CAPI Works
+## How TrackSource CAPI Works
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                        Your Website                               │
 │  ┌──────────────────┐      ┌──────────────────┐                  │
-│  │ TracksSource SDK │      │  Facebook Pixel  │                  │
+│  │ TrackSource SDK │      │  Facebook Pixel  │                  │
 │  │ (captures fbp,   │      │  (browser-side)  │                  │
 │  │  fbc, events)    │      │                  │                  │
 │  └────────┬─────────┘      └────────┬─────────┘                  │
@@ -38,7 +38,7 @@ The **Conversions API** (CAPI) is Facebook's server-to-server event tracking sys
             │                         │
             ▼                         │
 ┌───────────────────────┐             │
-│   TracksSource        │             │
+│   TrackSource        │             │
 │   Event Ingestion     │             │
 └───────────┬───────────┘             │
             │                         │
@@ -72,7 +72,7 @@ You'll need:
 Ensure your SDK is capturing Facebook cookies:
 
 ```javascript
-TracksSource('init', 'YOUR_TENANT_ID');
+TrackSource('init', 'YOUR_TENANT_ID');
 
 // The SDK automatically captures:
 // - fbp (Facebook browser ID)
@@ -85,9 +85,9 @@ The SDK automatically reads:
 
 ## Events Sent to Facebook
 
-TracksSource sends these events to CAPI:
+TrackSource sends these events to CAPI:
 
-| TracksSource Event | Facebook Event | Parameters |
+| TrackSource Event | Facebook Event | Parameters |
 |-------------------|----------------|------------|
 | `page_view` | `PageView` | `fbp`, `fbc`, URL |
 | `lead` | `Lead` | email, phone, fbp, fbc |
@@ -124,7 +124,7 @@ Each event includes:
 
 ## Deduplication
 
-TracksSource automatically deduplicates events:
+TrackSource automatically deduplicates events:
 
 1. Each event gets a unique `event_id`
 2. Same `event_id` sent via both Pixel and CAPI
@@ -132,7 +132,7 @@ TracksSource automatically deduplicates events:
 
 ```javascript
 // SDK generates event_id
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   revenue: 99.00,
   // event_id: "evt_abc123" (auto-generated)
 });
@@ -158,7 +158,7 @@ Use Facebook's Test Events tool:
 
 1. Go to Events Manager → Test Events
 2. Copy the Test Event Code
-3. Add to your TracksSource config
+3. Add to your TrackSource config
 4. Submit test conversions
 5. Verify events appear in Test Events tab
 

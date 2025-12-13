@@ -1,6 +1,6 @@
 ---
 title: React Integration
-description: 'Using TracksSource with React applications'
+description: 'Using TrackSource with React applications'
 ---
 
 ## Installation
@@ -13,17 +13,17 @@ npm install @tracksource/react
 
 ### Provider Setup
 
-Wrap your app with the TracksSource provider:
+Wrap your app with the TrackSource provider:
 
 ```jsx
 // App.jsx or main.jsx
-import { TracksSourceProvider } from '@tracksource/react';
+import { TrackSourceProvider } from '@tracksource/react';
 
 function App() {
   return (
-    <TracksSourceProvider tenantId="YOUR_TENANT_ID">
+    <TrackSourceProvider tenantId="YOUR_TENANT_ID">
       <YourApp />
-    </TracksSourceProvider>
+    </TrackSourceProvider>
   );
 }
 ```
@@ -31,7 +31,7 @@ function App() {
 ### With Options
 
 ```jsx
-<TracksSourceProvider
+<TrackSourceProvider
   tenantId="YOUR_TENANT_ID"
   options={{
     trackPageViews: true,
@@ -40,18 +40,18 @@ function App() {
   }}
 >
   <YourApp />
-</TracksSourceProvider>
+</TrackSourceProvider>
 ```
 
 ## Hooks
 
-### useTracksSource
+### useTrackSource
 
 ```jsx
-import { useTracksSource } from '@tracksource/react';
+import { useTrackSource } from '@tracksource/react';
 
 function PurchaseButton({ product }) {
-  const { track, identify } = useTracksSource();
+  const { track, identify } = useTrackSource();
 
   const handlePurchase = async () => {
     // Track purchase event
@@ -171,11 +171,11 @@ Track page views on route changes:
 ```jsx
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useTracksSource } from '@tracksource/react';
+import { useTrackSource } from '@tracksource/react';
 
 function PageViewTracker() {
   const location = useLocation();
-  const { page } = useTracksSource();
+  const { page } = useTrackSource();
 
   useEffect(() => {
     page({
@@ -190,14 +190,14 @@ function PageViewTracker() {
 // Add to your app
 function App() {
   return (
-    <TracksSourceProvider tenantId="YOUR_TENANT_ID">
+    <TrackSourceProvider tenantId="YOUR_TENANT_ID">
       <BrowserRouter>
         <PageViewTracker />
         <Routes>
           {/* Your routes */}
         </Routes>
       </BrowserRouter>
-    </TracksSourceProvider>
+    </TrackSourceProvider>
   );
 }
 ```
@@ -207,7 +207,7 @@ function App() {
 Full TypeScript support included:
 
 ```tsx
-import { useTracksSource, TrackEventProperties } from '@tracksource/react';
+import { useTrackSource, TrackEventProperties } from '@tracksource/react';
 
 interface PurchaseProperties extends TrackEventProperties {
   revenue: number;
@@ -216,7 +216,7 @@ interface PurchaseProperties extends TrackEventProperties {
 }
 
 function Checkout() {
-  const { track } = useTracksSource();
+  const { track } = useTrackSource();
 
   const handlePurchase = () => {
     track<PurchaseProperties>('purchase', {
@@ -239,13 +239,13 @@ For React Server Components, use the client-side hooks in client components:
 // components/TrackingProvider.tsx
 'use client';
 
-import { TracksSourceProvider } from '@tracksource/react';
+import { TrackSourceProvider } from '@tracksource/react';
 
 export function TrackingProvider({ children }: { children: React.ReactNode }) {
   return (
-    <TracksSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
+    <TrackSourceProvider tenantId={process.env.NEXT_PUBLIC_TRACKSOURCE_ID!}>
       {children}
-    </TracksSourceProvider>
+    </TrackSourceProvider>
   );
 }
 ```

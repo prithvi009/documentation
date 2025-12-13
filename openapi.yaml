@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: TracksSource API
+  title: TrackSource API
   description: |
-    TracksSource is a privacy-first attribution tracking platform that helps you understand
+    TrackSource is a privacy-first attribution tracking platform that helps you understand
     which marketing channels drive conversions and revenue.
 
     ## Authentication
@@ -15,7 +15,7 @@ info:
     ```
   version: 1.0.0
   contact:
-    name: TracksSource Support
+    name: TrackSource Support
     email: support@tracksource.io
     url: https://tracksource.io
   license:

@@ -1,6 +1,6 @@
 ---
 title: How It Works
-description: 'Understanding TracksSource attribution and identity resolution'
+description: 'Understanding TrackSource attribution and identity resolution'
 ---
 
 ## The Attribution Problem
@@ -12,11 +12,11 @@ Traditional tools give conflicting answers:
 - Google says: "No, we did!"
 - Your analytics: "¯\_(ツ)_/¯"
 
-## How TracksSource Solves This
+## How TrackSource Solves This
 
 ### 1. First-Party Data Collection
 
-When a visitor lands on your website, TracksSource captures:
+When a visitor lands on your website, TrackSource captures:
 
 ```javascript
 {
@@ -151,14 +151,14 @@ Day 7: Purchase
 
 ## Server-Side Event Forwarding
 
-When TracksSource captures an event, it's automatically forwarded to ad platforms:
+When TrackSource captures an event, it's automatically forwarded to ad platforms:
 
 ```
 Customer Purchase Event
          │
          ▼
 ┌─────────────────────┐
-│  TracksSource       │
+│  TrackSource       │
 │  Event Ingestion    │
 └─────────────────────┘
          │
@@ -183,7 +183,7 @@ Customer Purchase Event
 sequenceDiagram
     participant V as Visitor
     participant W as Website
-    participant S as TracksSource SDK
+    participant S as TrackSource SDK
     participant E as Event Ingestion
     participant A as Attribution Engine
     participant F as Facebook CAPI
@@ -208,7 +208,7 @@ sequenceDiagram
 
 ## Privacy & Compliance
 
-TracksSource is designed for privacy:
+TrackSource is designed for privacy:
 
 <CardGroup cols={2}>
   <Card title="First-Party Only" icon="cookie">

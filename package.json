@@ -1,7 +1,7 @@
 {
   "name": "tracksource-docs",
   "version": "1.0.0",
-  "description": "TracksSource documentation powered by Mintlify",
+  "description": "TrackSource documentation powered by Mintlify",
   "scripts": {
     "dev": "mintlify dev",
     "build": "mintlify build",

@@ -1,11 +1,11 @@
 ---
 title: Google Ads Integration
-description: 'Track Google Ads conversions with TracksSource'
+description: 'Track Google Ads conversions with TrackSource'
 ---
 
 ## Overview
 
-TracksSource captures Google Click IDs (GCLID) to attribute conversions to Google Ads campaigns.
+TrackSource captures Google Click IDs (GCLID) to attribute conversions to Google Ads campaigns.
 
 ## How It Works
 
@@ -18,7 +18,7 @@ Google Ad Click → Landing Page → Conversion → Attribution
 
 ## Automatic GCLID Capture
 
-The TracksSource SDK automatically captures the `gclid` parameter:
+The TrackSource SDK automatically captures the `gclid` parameter:
 
 ```javascript
 // User clicks Google Ad with URL:
@@ -41,8 +41,8 @@ Include GCLID in form submissions for attribution:
 <input type="hidden" name="gclid" id="ts_gclid">
 
 <script>
-TracksSource('ready', function() {
-  const data = TracksSource('getAttributionData');
+TrackSource('ready', function() {
+  const data = TrackSource('getAttributionData');
   document.getElementById('ts_gclid').value = data.gclid || '';
 });
 </script>
@@ -52,9 +52,9 @@ TracksSource('ready', function() {
 
 ### Option 1: Offline Conversion Import
 
-Export conversions from TracksSource and import to Google Ads:
+Export conversions from TrackSource and import to Google Ads:
 
-1. Go to TracksSource **Analytics** → **Export**
+1. Go to TrackSource **Analytics** → **Export**
 2. Select conversions with GCLID
 3. Download CSV in Google's format
 4. Import to Google Ads → Conversions → Upload
@@ -78,9 +78,9 @@ Track these events for Google Ads optimization:
 
 ```javascript
 // When form is submitted
-TracksSource('track', 'lead', {
+TrackSource('track', 'lead', {
   email: 'customer@example.com',
-  gclid: TracksSource('getAttributionData').gclid,
+  gclid: TrackSource('getAttributionData').gclid,
   value: 50.00,  // Optional: lead value
   currency: 'USD'
 });
@@ -89,12 +89,12 @@ TracksSource('track', 'lead', {
 ## Example: Purchase Tracking
 
 ```javascript
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   email: 'customer@example.com',
   revenue: 299.00,
   currency: 'USD',
   order_id: 'ORD-12345',
-  gclid: TracksSource('getAttributionData').gclid  // Links to Google Ad click
+  gclid: TrackSource('getAttributionData').gclid  // Links to Google Ad click
 });
 ```
 
@@ -129,10 +129,10 @@ Set these in Google Ads:
 
 ## Enhanced Conversions
 
-TracksSource supports Enhanced Conversions data:
+TrackSource supports Enhanced Conversions data:
 
 ```javascript
-TracksSource('track', 'purchase', {
+TrackSource('track', 'purchase', {
   // User data for enhanced conversions
   email: 'customer@example.com',  // Hashed automatically
   phone: '+1-555-123-4567',       // Hashed automatically

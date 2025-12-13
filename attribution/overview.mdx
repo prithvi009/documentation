@@ -1,6 +1,6 @@
 ---
 title: Attribution Overview
-description: 'Understanding marketing attribution with TracksSource'
+description: 'Understanding marketing attribution with TrackSource'
 ---
 
 ## What is Attribution?
@@ -36,14 +36,14 @@ Without proper attribution:
 - **Google** reports: "No, we did!"
 - **You**: Confused about what actually works
 
-## How TracksSource Solves This
+## How TrackSource Solves This
 
 ### 1. First-Party Data Collection
 
-TracksSource uses first-party cookies and your own data:
+TrackSource uses first-party cookies and your own data:
 
 ```javascript
-// What TracksSource captures on each visit
+// What TrackSource captures on each visit
 {
   anonymous_id: "anon_abc123",    // Persists across sessions
   fbp: "fb.1.xxx",                // Facebook browser ID
@@ -57,7 +57,7 @@ TracksSource uses first-party cookies and your own data:
 
 ### 2. Identity Resolution
 
-When a visitor becomes known (form submit, purchase), TracksSource links their identity:
+When a visitor becomes known (form submit, purchase), TrackSource links their identity:
 
 ```
 Anonymous Session                    Known Customer
@@ -70,7 +70,7 @@ Anonymous Session                    Known Customer
 
 ### 3. Multi-Touch Attribution
 
-TracksSource tracks every touchpoint and lets you choose how to allocate credit:
+TrackSource tracks every touchpoint and lets you choose how to allocate credit:
 
 <CardGroup cols={2}>
   <Card title="First Touch" icon="flag">
@@ -129,13 +129,13 @@ The source of traffic:
 ┌──────────────────────────────────────────────────────────────────┐
 │                        Your Website                               │
 │  ┌─────────────────┐                                             │
-│  │ TracksSource SDK│ ─── Captures: UTM, fbp, fbc, gclid, etc.    │
+│  │ TrackSource SDK│ ─── Captures: UTM, fbp, fbc, gclid, etc.    │
 │  └─────────────────┘                                             │
 └──────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                    TracksSource Platform                          │
+│                    TrackSource Platform                          │
 │                                                                   │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐        │
 │  │   Events     │───▶│  Identity    │───▶│ Attribution  │        │
