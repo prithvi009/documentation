@@ -37,11 +37,6 @@
   ],
   "anchors": [
     {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/tracksource-io/tracksource"
-    },
-    {
       "name": "Community",
       "icon": "discord",
       "url": "https://discord.gg/tracksource"
@@ -105,14 +100,6 @@
       ]
     },
     {
-      "group": "Self-Hosting",
-      "pages": [
-        "self-hosting/overview",
-        "self-hosting/docker",
-        "self-hosting/kubernetes"
-      ]
-    },
-    {
       "group": "API Reference",
       "pages": [
         "api-reference/overview",
@@ -154,7 +141,6 @@
   ],
   "footerSocials": {
     "twitter": "https://twitter.com/tracksource",
-    "github": "https://github.com/tracksource-io",
     "linkedin": "https://linkedin.com/company/tracksource"
   },
   "api": {
