@@ -66,6 +66,16 @@
       ]
     },
     {
+      "group": "Use Cases",
+      "pages": [
+        "use-cases/overview",
+        "use-cases/saas",
+        "use-cases/courses",
+        "use-cases/ecommerce",
+        "use-cases/agencies"
+      ]
+    },
+    {
       "group": "Migration Guides",
       "pages": [
         "migration/hyros"

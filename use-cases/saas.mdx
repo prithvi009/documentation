@@ -1,0 +1,417 @@
+---
+title: 'SaaS Attribution - Track Subscriptions and MRR'
+sidebarTitle: 'SaaS'
+description: 'Integrate TrackSource for SaaS businesses. Track free trials, subscriptions, feature usage, and attribute MRR to marketing channels.'
+icon: 'cloud'
+og:title: 'SaaS Marketing Attribution | TrackSource'
+og:description: 'Know which marketing channels drive your MRR. Track trials, conversions, and customer lifetime value.'
+---
+
+# SaaS Integration Guide
+
+Track the complete SaaS customer journey from ad click to subscription, including free trials, plan upgrades, and churn.
+
+## Typical SaaS Stack
+
+```
+Marketing Site  →  Signup/Trial  →  App Usage  →  Subscription  →  Expansion
+(Next.js)          (Auth)           (Product)     (Stripe)         (Upsells)
+```
+
+**Common Technologies**:
+- **Frontend**: Next.js, React, Vue
+- **Auth**: Clerk, Auth0, NextAuth, Supabase
+- **Payments**: Stripe
+- **Analytics**: Mixpanel, Amplitude (product), TrackSource (attribution)
+
+## Integration Overview
+
+<Steps>
+  <Step title="Install SDK on Marketing Site">
+    Track visitors on your marketing pages
+  </Step>
+  <Step title="Identify on Signup">
+    Link anonymous visitors to user accounts
+  </Step>
+  <Step title="Connect Stripe Webhooks">
+    Track subscriptions, upgrades, and churn
+  </Step>
+  <Step title="Track Feature Usage (Optional)">
+    See which features drive conversions
+  </Step>
+</Steps>
+
+## Step 1: Marketing Site Setup
+
+### Next.js App Router
+
+```tsx
+// app/layout.tsx
+import Script from 'next/script'
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <Script
+          id="tracksource"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+              new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','tsLayer','${process.env.NEXT_PUBLIC_TRACKSOURCE_ID}');
+            `,
+          }}
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+Add to `.env.local`:
+```
+NEXT_PUBLIC_TRACKSOURCE_ID=your_tenant_id
+```
+
+### React SPA
+
+```jsx
+// src/index.jsx or App.jsx
+import { useEffect } from 'react';
+
+function App() {
+  useEffect(() => {
+    // Load TrackSource
+    (function(w,d,s,l,i){
+      w[l]=w[l]||[];
+      w[l].push({'ts.start': new Date().getTime(), event:'ts.js'});
+      var f=d.getElementsByTagName(s)[0],
+      j=d.createElement(s),
+      dl=l!='tsLayer'?'&l='+l:'';
+      j.async=true;
+      j.src='https://cdn.tracksource.io/ts.js?id='+i+dl;
+      f.parentNode.insertBefore(j,f);
+    })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
+  }, []);
+
+  return <RouterProvider router={router} />;
+}
+```
+
+## Step 2: Identify on Signup
+
+When a user signs up or logs in, identify them to link their anonymous browsing history.
+
+### With Clerk
+
+```tsx
+// components/AuthHandler.tsx
+'use client';
+
+import { useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
+
+export function AuthHandler() {
+  const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (isLoaded && user && window.ts) {
+      window.ts.identify(user.primaryEmailAddress?.emailAddress, {
+        user_id: user.id,
+        name: user.fullName,
+        created_at: user.createdAt
+      });
+    }
+  }, [user, isLoaded]);
+
+  return null;
+}
+
+// In your layout
+<AuthHandler />
+```
+
+### With NextAuth
+
+```tsx
+// In your auth callback or layout
+import { useSession } from 'next-auth/react';
+
+export function TrackSourceIdentify() {
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session?.user && window.ts) {
+      window.ts.identify(session.user.email, {
+        name: session.user.name,
+        user_id: session.user.id
+      });
+    }
+  }, [session]);
+
+  return null;
+}
+```
+
+### With Supabase
+
+```tsx
+import { useUser } from '@supabase/auth-helpers-react';
+
+export function TrackSourceIdentify() {
+  const user = useUser();
+
+  useEffect(() => {
+    if (user && window.ts) {
+      window.ts.identify(user.email, {
+        user_id: user.id,
+        created_at: user.created_at
+      });
+    }
+  }, [user]);
+
+  return null;
+}
+```
+
+### Server-Side Identification
+
+For server-rendered apps, identify via API:
+
+```typescript
+// app/api/auth/callback/route.ts
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  // Your auth logic...
+  const user = await authenticateUser();
+
+  // Get anonymous ID from cookie
+  const anonymousId = request.cookies.get('ts_anonymous_id')?.value;
+
+  // Identify to TrackSource
+  await fetch('https://events.tracksource.io/v1/identify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-ID': process.env.TRACKSOURCE_TENANT_ID!
+    },
+    body: JSON.stringify({
+      user_id: user.email,
+      anonymous_id: anonymousId,
+      properties: {
+        name: user.name,
+        user_id: user.id
+      }
+    })
+  });
+
+  return NextResponse.redirect('/dashboard');
+}
+```
+
+## Step 3: Connect Stripe
+
+### Configure Stripe Webhook
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → Developers → Webhooks
+2. Click **Add endpoint**
+3. Set URL: `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID`
+4. Select events:
+   - `checkout.session.completed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.paid`
+   - `charge.refunded`
+
+### Pass Anonymous ID to Checkout
+
+When creating a Stripe Checkout session, include the TrackSource ID:
+
+```typescript
+// app/api/create-checkout/route.ts
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+export async function POST(request: Request) {
+  const { priceId, tsAnonymousId } = await request.json();
+
+  const session = await stripe.checkout.sessions.create({
+    mode: 'subscription',
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${process.env.NEXT_PUBLIC_URL}/success`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL}/pricing`,
+    metadata: {
+      ts_anonymous_id: tsAnonymousId
+    }
+  });
+
+  return Response.json({ url: session.url });
+}
+```
+
+Frontend:
+
+```tsx
+// components/PricingCard.tsx
+async function handleCheckout(priceId: string) {
+  const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id;
+
+  const response = await fetch('/api/create-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ priceId, tsAnonymousId })
+  });
+
+  const { url } = await response.json();
+  window.location.href = url;
+}
+```
+
+## Step 4: Track Key Events
+
+### Trial Started
+
+```typescript
+// When user starts a free trial
+ts.track('trial_started', {
+  plan: 'pro',
+  trial_days: 14
+});
+```
+
+### Feature Usage
+
+```typescript
+// Track meaningful feature usage
+ts.track('feature_used', {
+  feature: 'api_integration',
+  action: 'created'
+});
+
+ts.track('feature_used', {
+  feature: 'team_invite',
+  invites_sent: 3
+});
+```
+
+### Plan Upgrade (Client-Side Backup)
+
+```typescript
+// After successful upgrade
+ts.track('plan_upgrade', {
+  from_plan: 'starter',
+  to_plan: 'pro',
+  conversion_value: 49
+});
+```
+
+## SaaS Metrics in TrackSource
+
+### What You'll See
+
+| Metric | Description |
+|--------|-------------|
+| **MRR by Source** | Monthly recurring revenue attributed to each channel |
+| **Trial-to-Paid by Source** | Conversion rate from trial to paid by marketing channel |
+| **LTV by Source** | Customer lifetime value by acquisition channel |
+| **CAC** | Customer acquisition cost (when you input ad spend) |
+| **Payback Period** | Time to recover CAC by channel |
+
+### Example Dashboard View
+
+```
+Channel         Trials    Paid    Conv%    MRR      LTV      CAC
+─────────────────────────────────────────────────────────────────
+Google Ads       150       45      30%    $2,205   $450     $89
+Facebook         200       40      20%    $1,960   $380    $125
+Organic          300       90      30%    $4,410   $520     $0
+Referral          50       25      50%    $1,225   $600    $10
+```
+
+## Complete Integration Example
+
+```tsx
+// lib/tracksource.ts
+export function identifyUser(user: { email: string; id: string; name?: string }) {
+  if (typeof window !== 'undefined' && window.ts) {
+    window.ts.identify(user.email, {
+      user_id: user.id,
+      name: user.name
+    });
+  }
+}
+
+export function trackEvent(event: string, properties?: Record<string, any>) {
+  if (typeof window !== 'undefined' && window.ts) {
+    window.ts.track(event, properties);
+  }
+}
+
+export function getAnonymousId(): string | undefined {
+  if (typeof window !== 'undefined' && window.tsLayer) {
+    return window.tsLayer.find(e => e.anonymous_id)?.anonymous_id;
+  }
+}
+
+// Usage
+import { identifyUser, trackEvent, getAnonymousId } from '@/lib/tracksource';
+
+// On signup
+identifyUser({ email: user.email, id: user.id, name: user.name });
+trackEvent('signup', { method: 'email' });
+
+// On trial start
+trackEvent('trial_started', { plan: 'pro' });
+
+// On feature use
+trackEvent('feature_used', { feature: 'dashboard_created' });
+
+// On checkout
+const checkoutUrl = await createCheckout(priceId, getAnonymousId());
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Subscriptions not appearing">
+    1. Verify Stripe webhook is configured correctly
+    2. Check Stripe webhook logs for delivery errors
+    3. Ensure `ts_anonymous_id` is passed in checkout metadata
+    4. Verify customer email matches the identified user
+  </Accordion>
+
+  <Accordion title="Trial conversions not attributed">
+    1. Ensure identify is called on signup (not just login)
+    2. Check that the email is consistent between signup and checkout
+    3. Verify TrackSource script loads on marketing site
+  </Accordion>
+
+  <Accordion title="MRR showing incorrect values">
+    1. Check currency is being passed correctly
+    2. Verify subscription amounts in Stripe
+    3. Ensure `invoice.paid` event is subscribed
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Stripe Integration" icon="stripe" href="/payments/stripe">
+    Detailed Stripe webhook configuration
+  </Card>
+  <Card title="Attribution Models" icon="chart-pie" href="/attribution/models">
+    Choose the right attribution model
+  </Card>
+</CardGroup>

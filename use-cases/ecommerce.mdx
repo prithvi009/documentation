@@ -1,0 +1,483 @@
+---
+title: 'E-commerce Attribution - Track Orders and ROAS'
+sidebarTitle: 'E-commerce'
+description: 'Integrate TrackSource for e-commerce stores. Track product views, add to cart, checkout, and purchases on Shopify, WooCommerce, and custom stores.'
+icon: 'cart-shopping'
+og:title: 'E-commerce Marketing Attribution | TrackSource'
+og:description: 'Know your true ROAS. Track every order from ad click to purchase across Shopify, WooCommerce, and custom stores.'
+---
+
+# E-commerce Integration Guide
+
+Track the complete e-commerce customer journey from ad click through product view, add to cart, checkout, and purchase.
+
+## Typical E-commerce Stack
+
+```
+Ad Click  →  Product Page  →  Add to Cart  →  Checkout  →  Purchase  →  Repeat
+             (View item)      (Cart event)    (Begin)      (Order)      (Retention)
+```
+
+**Common Technologies**:
+- **Platforms**: Shopify, WooCommerce, BigCommerce, Magento
+- **Payments**: Shopify Payments, Stripe, PayPal
+- **Email**: Klaviyo, Mailchimp, Omnisend
+
+## Integration Overview
+
+<Steps>
+  <Step title="Install SDK on All Pages">
+    Track visitors across your entire store
+  </Step>
+  <Step title="Track Product Events">
+    Product views, add to cart, checkout initiated
+  </Step>
+  <Step title="Connect Order Webhooks">
+    Attribute purchases to marketing channels
+  </Step>
+</Steps>
+
+---
+
+## Shopify Integration
+
+### Step 1: Add TrackSource Script
+
+Add to your **theme.liquid** file, just before `</head>`:
+
+```liquid
+<!-- TrackSource Attribution -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+**To add this:**
+1. Go to **Online Store** → **Themes**
+2. Click **Actions** → **Edit code**
+3. Open **Layout** → **theme.liquid**
+4. Paste the script before `</head>`
+5. Save
+
+### Step 2: Track Product Views
+
+Add to your **product.liquid** or **main-product.liquid** template:
+
+```liquid
+{% comment %} TrackSource Product View {% endcomment %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (window.ts) {
+      window.ts.track('product_view', {
+        product_id: '{{ product.id }}',
+        product_name: '{{ product.title | escape }}',
+        price: {{ product.price | divided_by: 100.0 }},
+        currency: '{{ shop.currency }}',
+        category: '{{ product.type | escape }}',
+        variant_id: '{{ product.selected_or_first_available_variant.id }}'
+      });
+    }
+  });
+</script>
+```
+
+### Step 3: Track Add to Cart
+
+Add to your **theme.liquid** or create a snippet:
+
+```liquid
+{% comment %} TrackSource Add to Cart Tracking {% endcomment %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Listen for add to cart events
+    document.querySelectorAll('form[action="/cart/add"]').forEach(function(form) {
+      form.addEventListener('submit', function(e) {
+        if (window.ts) {
+          var productData = {
+            product_id: form.querySelector('[name="id"]').value,
+            quantity: form.querySelector('[name="quantity"]')?.value || 1
+          };
+
+          // Get product info from page if available
+          {% if product %}
+          productData.product_name = '{{ product.title | escape }}';
+          productData.price = {{ product.price | divided_by: 100.0 }};
+          productData.currency = '{{ shop.currency }}';
+          {% endif %}
+
+          window.ts.track('add_to_cart', productData);
+        }
+      });
+    });
+
+    // Also listen for AJAX add to cart (common in modern themes)
+    var originalFetch = window.fetch;
+    window.fetch = function() {
+      var url = arguments[0];
+      if (typeof url === 'string' && url.includes('/cart/add')) {
+        // Track add to cart
+        if (window.ts) {
+          window.ts.track('add_to_cart', {});
+        }
+      }
+      return originalFetch.apply(this, arguments);
+    };
+  });
+</script>
+```
+
+### Step 4: Track Checkout Started
+
+Add to **theme.liquid** (Shopify automatically redirects to checkout):
+
+```liquid
+<script>
+  // Track when user clicks checkout button
+  document.addEventListener('click', function(e) {
+    var target = e.target;
+    if (target.name === 'checkout' || target.closest('[name="checkout"]') ||
+        target.closest('a[href*="/checkout"]')) {
+      if (window.ts) {
+        window.ts.track('checkout_started', {
+          cart_total: {{ cart.total_price | divided_by: 100.0 }},
+          currency: '{{ shop.currency }}',
+          item_count: {{ cart.item_count }}
+        });
+      }
+    }
+  });
+</script>
+```
+
+### Step 5: Configure Shopify Webhook
+
+**Option A: Shopify Admin Webhook**
+
+1. Go to **Settings** → **Notifications** → **Webhooks**
+2. Click **Create webhook**
+3. Configure:
+   - Event: **Order payment**
+   - URL: `https://events.tracksource.io/webhooks/shopify/YOUR_TENANT_ID`
+   - Format: JSON
+4. Save
+
+**Option B: Shopify Flow (Plus only)**
+
+Create a Flow that triggers on Order Created and sends webhook to TrackSource.
+
+### Step 6: Thank You Page Tracking
+
+Add to your **checkout.liquid** or order confirmation (Shopify Plus) or use Additional Scripts:
+
+Go to **Settings** → **Checkout** → **Order status page** → **Additional scripts**:
+
+```liquid
+{% if first_time_accessed %}
+<script>
+  // Final conversion tracking (backup)
+  if (window.ts) {
+    window.ts.track('conversion', {
+      order_id: '{{ order.order_number }}',
+      conversion_value: {{ total_price | divided_by: 100.0 }},
+      currency: '{{ currency }}',
+      email: '{{ customer.email }}',
+      items: [
+        {% for line_item in line_items %}
+        {
+          product_id: '{{ line_item.product_id }}',
+          name: '{{ line_item.title | escape }}',
+          price: {{ line_item.price | divided_by: 100.0 }},
+          quantity: {{ line_item.quantity }}
+        }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ]
+    });
+  }
+</script>
+{% endif %}
+```
+
+---
+
+## WooCommerce Integration
+
+### Step 1: Add TrackSource Script
+
+Add to your theme's **header.php** or use a plugin like "Insert Headers and Footers":
+
+```php
+<!-- TrackSource Attribution -->
+<script>
+  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
+  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://cdn.tracksource.io/ts.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
+</script>
+```
+
+### Step 2: Track WooCommerce Events
+
+Add to your theme's **functions.php** or create a custom plugin:
+
+```php
+<?php
+// TrackSource E-commerce Tracking
+
+// Product View
+add_action('woocommerce_after_single_product', 'ts_track_product_view');
+function ts_track_product_view() {
+    global $product;
+    ?>
+    <script>
+      if (window.ts) {
+        window.ts.track('product_view', {
+          product_id: '<?php echo $product->get_id(); ?>',
+          product_name: '<?php echo esc_js($product->get_name()); ?>',
+          price: <?php echo $product->get_price(); ?>,
+          currency: '<?php echo get_woocommerce_currency(); ?>',
+          category: '<?php echo esc_js(wc_get_product_category_list($product->get_id())); ?>'
+        });
+      }
+    </script>
+    <?php
+}
+
+// Add to Cart (AJAX)
+add_action('wp_footer', 'ts_track_add_to_cart');
+function ts_track_add_to_cart() {
+    ?>
+    <script>
+      jQuery(document.body).on('added_to_cart', function(e, fragments, cart_hash, button) {
+        if (window.ts) {
+          window.ts.track('add_to_cart', {
+            product_id: button.data('product_id'),
+            quantity: button.data('quantity') || 1
+          });
+        }
+      });
+    </script>
+    <?php
+}
+
+// Checkout Started
+add_action('woocommerce_before_checkout_form', 'ts_track_checkout_started');
+function ts_track_checkout_started() {
+    $cart_total = WC()->cart->get_total('edit');
+    ?>
+    <script>
+      if (window.ts) {
+        window.ts.track('checkout_started', {
+          cart_total: <?php echo $cart_total; ?>,
+          currency: '<?php echo get_woocommerce_currency(); ?>'
+        });
+      }
+    </script>
+    <?php
+}
+
+// Order Completed
+add_action('woocommerce_thankyou', 'ts_track_purchase');
+function ts_track_purchase($order_id) {
+    $order = wc_get_order($order_id);
+    if (!$order) return;
+
+    // Only track once
+    if ($order->get_meta('_ts_tracked')) return;
+    $order->update_meta_data('_ts_tracked', true);
+    $order->save();
+
+    $items = array();
+    foreach ($order->get_items() as $item) {
+        $items[] = array(
+            'product_id' => $item->get_product_id(),
+            'name' => $item->get_name(),
+            'price' => $item->get_total(),
+            'quantity' => $item->get_quantity()
+        );
+    }
+    ?>
+    <script>
+      if (window.ts) {
+        window.ts.track('conversion', {
+          order_id: '<?php echo $order_id; ?>',
+          conversion_value: <?php echo $order->get_total(); ?>,
+          currency: '<?php echo $order->get_currency(); ?>',
+          email: '<?php echo $order->get_billing_email(); ?>',
+          items: <?php echo json_encode($items); ?>
+        });
+
+        window.ts.identify('<?php echo $order->get_billing_email(); ?>', {
+          name: '<?php echo esc_js($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?>',
+          phone: '<?php echo esc_js($order->get_billing_phone()); ?>'
+        });
+      }
+    </script>
+    <?php
+}
+```
+
+### Step 3: WooCommerce Webhook
+
+1. Go to **WooCommerce** → **Settings** → **Advanced** → **Webhooks**
+2. Click **Add webhook**
+3. Configure:
+   - Name: TrackSource Orders
+   - Status: Active
+   - Topic: **Order created**
+   - Delivery URL: `https://events.tracksource.io/webhooks/woocommerce/YOUR_TENANT_ID`
+   - Secret: (optional, for verification)
+4. Save
+
+---
+
+## Custom E-commerce (React/Next.js)
+
+### Track Product View
+
+```typescript
+// components/ProductPage.tsx
+import { useEffect } from 'react';
+
+export function ProductPage({ product }) {
+  useEffect(() => {
+    if (window.ts) {
+      window.ts.track('product_view', {
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        currency: 'USD',
+        category: product.category
+      });
+    }
+  }, [product]);
+
+  return <div>{/* Product UI */}</div>;
+}
+```
+
+### Track Add to Cart
+
+```typescript
+// hooks/useCart.ts
+export function useAddToCart() {
+  const addToCart = (product, quantity = 1) => {
+    // Your cart logic
+    cartStore.add(product, quantity);
+
+    // Track
+    if (window.ts) {
+      window.ts.track('add_to_cart', {
+        product_id: product.id,
+        product_name: product.name,
+        price: product.price,
+        currency: 'USD',
+        quantity
+      });
+    }
+  };
+
+  return addToCart;
+}
+```
+
+### Track Checkout Started
+
+```typescript
+// pages/checkout.tsx
+import { useEffect } from 'react';
+
+export function CheckoutPage({ cart }) {
+  useEffect(() => {
+    if (window.ts) {
+      window.ts.track('checkout_started', {
+        cart_total: cart.total,
+        currency: 'USD',
+        item_count: cart.items.length
+      });
+    }
+  }, []);
+
+  return <div>{/* Checkout UI */}</div>;
+}
+```
+
+### Track Purchase via Stripe Webhook
+
+Set up Stripe webhook as described in the [Stripe integration guide](/payments/stripe).
+
+---
+
+## E-commerce Metrics
+
+### What You'll Track
+
+| Event | Metric | Use |
+|-------|--------|-----|
+| `product_view` | Views per product | Product interest |
+| `add_to_cart` | Cart adds | Purchase intent |
+| `checkout_started` | Checkout rate | Funnel drop-off |
+| `conversion` | Purchases | Revenue attribution |
+
+### Key Performance Indicators
+
+| KPI | Formula | Example |
+|-----|---------|---------|
+| **ROAS** | Revenue / Ad Spend | $10,000 / $2,000 = 5x |
+| **AOV** | Revenue / Orders | $10,000 / 50 = $200 |
+| **Conversion Rate** | Orders / Visitors | 50 / 2,500 = 2% |
+| **Cart Abandon Rate** | 1 - (Purchases / Carts) | 1 - (50 / 200) = 75% |
+
+### Example Attribution Report
+
+```
+Channel          Visits    Carts    Orders   Revenue    ROAS
+────────────────────────────────────────────────────────────
+Google Shopping   5,000     400       80    $16,000    8.0x
+Facebook Ads      3,000     180       36     $7,200    3.6x
+Instagram Ads     2,000     120       24     $4,800    4.8x
+Email             1,500     200       60    $12,000     ∞
+Organic           4,000     300       50    $10,000     ∞
+────────────────────────────────────────────────────────────
+Total            15,500   1,200      250    $50,000
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Orders not tracking on Shopify">
+    1. Verify webhook is configured in Settings → Notifications → Webhooks
+    2. Check webhook delivery logs for errors
+    3. Ensure the webhook URL has your correct Tenant ID
+    4. Also add thank-you page script as backup
+  </Accordion>
+
+  <Accordion title="Add to cart not tracking">
+    1. Shopify themes handle cart differently (AJAX vs form submit)
+    2. Check browser console for JavaScript errors
+    3. Verify TrackSource script loads before your cart code
+    4. Test with both regular and AJAX add-to-cart
+  </Accordion>
+
+  <Accordion title="Revenue not matching Shopify">
+    1. Check currency conversion settings
+    2. Verify all orders have webhooks firing
+    3. Look for duplicate tracking (webhook + client-side)
+    4. Check refunds are being handled
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Stripe Integration" icon="stripe" href="/payments/stripe">
+    Alternative payment tracking
+  </Card>
+  <Card title="Attribution Models" icon="chart-pie" href="/attribution/models">
+    Choose the right model for e-commerce
+  </Card>
+</CardGroup>

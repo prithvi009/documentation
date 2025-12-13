@@ -1,0 +1,182 @@
+---
+title: 'Integration by Business Type - TrackSource Use Cases'
+sidebarTitle: 'Overview'
+description: 'Learn how to integrate TrackSource for your specific business type. Guides for SaaS, courses, e-commerce, and service businesses.'
+icon: 'building'
+og:title: 'TrackSource Use Cases by Business Type'
+og:description: 'Step-by-step integration guides for SaaS, info products, e-commerce, and agencies. Match your tech stack to TrackSource.'
+---
+
+# Integration by Business Type
+
+Different businesses have different tech stacks and customer journeys. This section provides tailored integration guides for each business type.
+
+## Choose Your Business Type
+
+<CardGroup cols={2}>
+  <Card title="SaaS" icon="cloud" href="/use-cases/saas">
+    **Software as a Service**
+
+    Free trials, subscriptions, feature usage tracking, MRR attribution.
+
+    *Common stack: Next.js, React, Stripe*
+  </Card>
+  <Card title="Courses & Coaching" icon="graduation-cap" href="/use-cases/courses">
+    **Info Products & Digital Products**
+
+    Landing pages, lead forms, booking calls, high-ticket sales.
+
+    *Common stack: GHL, ClickFunnels, Typeform, Calendly, Whop*
+  </Card>
+  <Card title="E-commerce" icon="cart-shopping" href="/use-cases/ecommerce">
+    **Online Stores**
+
+    Product views, add to cart, checkout, purchases, repeat customers.
+
+    *Common stack: Shopify, WooCommerce, Stripe*
+  </Card>
+  <Card title="Agencies & Services" icon="briefcase" href="/use-cases/agencies">
+    **Service Businesses**
+
+    Lead capture, discovery calls, proposals, client invoicing.
+
+    *Common stack: WordPress, HubSpot, Calendly, Stripe invoices*
+  </Card>
+</CardGroup>
+
+## The Universal Pattern
+
+Regardless of your business type, TrackSource integration follows the same core pattern:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        CUSTOMER JOURNEY                                  │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   Ad Click  →  Landing Page  →  Lead Capture  →  Purchase/Conversion    │
+│      │             │                │                    │               │
+│      ▼             ▼                ▼                    ▼               │
+│   ┌─────┐    ┌──────────┐    ┌───────────┐      ┌─────────────┐        │
+│   │Click│    │TrackSource│    │  Webhook  │      │   Webhook   │        │
+│   │ ID  │    │  Script   │    │(Form/CRM) │      │  (Payment)  │        │
+│   └─────┘    └──────────┘    └───────────┘      └─────────────┘        │
+│      │             │                │                    │               │
+│      └─────────────┴────────────────┴────────────────────┘               │
+│                              │                                           │
+│                              ▼                                           │
+│                    ┌──────────────────┐                                 │
+│                    │   TrackSource    │                                 │
+│                    │   Attribution    │                                 │
+│                    └──────────────────┘                                 │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Step 1: Capture Traffic Source
+
+TrackSource automatically captures:
+- **UTM Parameters**: `utm_source`, `utm_medium`, `utm_campaign`
+- **Click IDs**: `fbclid` (Facebook), `gclid` (Google), `ttclid` (TikTok)
+- **Referrer**: Where the visitor came from
+- **Landing Page**: First page visited
+
+### Step 2: Link to Identity
+
+When you know who the visitor is (form submit, signup, purchase):
+- Pass `ts_anonymous_id` via hidden field OR
+- Match by email address
+
+### Step 3: Track Revenue
+
+Connect payment webhooks to attribute revenue to marketing channels.
+
+## Tech Stack Reference
+
+### Landing Page Platforms
+
+| Platform | Integration Method |
+|----------|-------------------|
+| Next.js / React | [JavaScript SDK](/integration/react) |
+| WordPress | [Script in header](/sdks/javascript/installation) |
+| Webflow | [Custom code](/sdks/javascript/installation) |
+| Shopify | [theme.liquid](/use-cases/ecommerce) |
+| GoHighLevel | [Custom code block](/use-cases/courses) |
+| ClickFunnels | [Tracking code](/use-cases/courses) |
+| Unbounce | [Script manager](/sdks/javascript/installation) |
+
+### Form Providers
+
+| Provider | Webhook URL |
+|----------|-------------|
+| Tally | `https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID` |
+| Typeform | `https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID` |
+| HubSpot | `https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID` |
+| GoHighLevel | `https://events.tracksource.io/webhooks/gohighlevel/YOUR_TENANT_ID` |
+| JotForm | `https://events.tracksource.io/webhooks/jotform/YOUR_TENANT_ID` |
+| Gravity Forms | `https://events.tracksource.io/webhooks/gravity/YOUR_TENANT_ID` |
+| Webflow | `https://events.tracksource.io/webhooks/webflow/YOUR_TENANT_ID` |
+| Custom Forms | `https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID` |
+
+### Booking Platforms
+
+| Platform | Webhook URL |
+|----------|-------------|
+| Calendly | `https://events.tracksource.io/webhooks/calendly/YOUR_TENANT_ID` |
+
+### Payment Providers
+
+| Provider | Webhook URL |
+|----------|-------------|
+| Stripe | `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID` |
+| Whop | `https://events.tracksource.io/webhooks/whop/YOUR_TENANT_ID` |
+| Shopify | `https://events.tracksource.io/webhooks/shopify/YOUR_TENANT_ID` |
+| LemonSqueezy | `https://events.tracksource.io/webhooks/lemonsqueezy/YOUR_TENANT_ID` |
+| PayPal | `https://events.tracksource.io/webhooks/paypal/YOUR_TENANT_ID` |
+
+## Key Metrics by Business Type
+
+| Business Type | Primary Metrics |
+|--------------|-----------------|
+| **SaaS** | MRR, LTV, Trial-to-Paid Rate, CAC |
+| **Courses** | Revenue per Lead, Sales Call Show Rate, Close Rate |
+| **E-commerce** | ROAS, AOV, Customer Acquisition Cost |
+| **Agencies** | Cost per Client, Client LTV, Lead Quality |
+
+## Common Challenges Solved
+
+<AccordionGroup>
+  <Accordion title="Iframe forms can't read URL parameters">
+    When forms are embedded as iframes (like Typeform in GHL), they can't access the parent page's URL. Solution: Pass `ts_anonymous_id` to the iframe URL. See the [Courses guide](/use-cases/courses) for details.
+  </Accordion>
+
+  <Accordion title="Multi-step funnels lose attribution">
+    When customers move through multiple pages/domains, attribution can be lost. Solution: TrackSource uses first-party cookies and click IDs that persist across pages.
+  </Accordion>
+
+  <Accordion title="Offline conversions (phone sales)">
+    When sales happen offline or via phone, you need to manually log them. Solution: Use the API to track conversions server-side with the customer's email.
+  </Accordion>
+
+  <Accordion title="Long sales cycles">
+    B2B and high-ticket sales can take weeks or months. Solution: TrackSource's default 30-day attribution window can be extended, and the full journey is preserved.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Choose your business type to get started:
+
+<CardGroup cols={2}>
+  <Card title="SaaS Guide" icon="cloud" href="/use-cases/saas">
+    Subscriptions, trials, and feature tracking
+  </Card>
+  <Card title="Courses Guide" icon="graduation-cap" href="/use-cases/courses">
+    Landing pages, forms, calls, and high-ticket sales
+  </Card>
+  <Card title="E-commerce Guide" icon="cart-shopping" href="/use-cases/ecommerce">
+    Product tracking, cart, checkout, and orders
+  </Card>
+  <Card title="Agencies Guide" icon="briefcase" href="/use-cases/agencies">
+    Lead capture, proposals, and client billing
+  </Card>
+</CardGroup>
