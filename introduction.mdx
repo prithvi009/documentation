@@ -91,35 +91,6 @@ Ad Click → Website Visit → Form Submit → Purchase → Revenue
   </Accordion>
 </AccordionGroup>
 
-## Architecture Overview
-
-TrackSource is built on a modern, scalable architecture:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Your Website                              │
-│  ┌─────────────────┐                                            │
-│  │ TrackSource SDK│ ──────────────────────────────────┐        │
-│  └─────────────────┘                                   │        │
-└───────────────────────────────────────────────────────│────────┘
-                                                        ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    TrackSource Platform                         │
-│                                                                  │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐       │
-│  │    Event     │───▶│  Attribution │───▶│   Facebook   │       │
-│  │  Ingestion   │    │    Engine    │    │    CAPI      │       │
-│  └──────────────┘    └──────────────┘    └──────────────┘       │
-│         │                   │                                    │
-│         ▼                   ▼                                    │
-│  ┌──────────────┐    ┌──────────────┐                           │
-│  │  PostgreSQL  │    │  ClickHouse  │                           │
-│  │   (Events)   │    │ (Analytics)  │                           │
-│  └──────────────┘    └──────────────┘                           │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
 ## Quick Links
 
 <CardGroup cols={3}>
