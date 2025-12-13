@@ -60,15 +60,8 @@ export default function RootLayout({
         <Script
           id="tracksource"
           strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-              new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-              j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-              'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-              })(window,document,'script','tsLayer','${process.env.NEXT_PUBLIC_TRACKSOURCE_ID}');
-            `,
-          }}
+          src="https://events.tracksource.io/sdk/ts.min.js"
+          data-tenant={process.env.NEXT_PUBLIC_TRACKSOURCE_ID}
         />
       </head>
       <body>{children}</body>
@@ -90,17 +83,14 @@ import { useEffect } from 'react';
 
 function App() {
   useEffect(() => {
-    // Load TrackSource
-    (function(w,d,s,l,i){
-      w[l]=w[l]||[];
-      w[l].push({'ts.start': new Date().getTime(), event:'ts.js'});
-      var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),
-      dl=l!='tsLayer'?'&l='+l:'';
-      j.async=true;
-      j.src='https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;
-      f.parentNode.insertBefore(j,f);
-    })(window, document, 'script', 'tsLayer', 'YOUR_TENANT_ID');
+    // Load TrackSource SDK
+    if (window.TracksSource) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://events.tracksource.io/sdk/ts.min.js';
+    script.setAttribute('data-tenant', 'YOUR_TENANT_ID');
+    script.async = true;
+    document.head.appendChild(script);
   }, []);
 
   return <RouterProvider router={router} />;
@@ -124,8 +114,8 @@ export function AuthHandler() {
   const { user, isLoaded } = useUser();
 
   useEffect(() => {
-    if (isLoaded && user && window.ts) {
-      window.ts.identify(user.primaryEmailAddress?.emailAddress, {
+    if (isLoaded && user && window.TracksSource) {
+      window.TracksSource.identify(user.primaryEmailAddress?.emailAddress, {
         user_id: user.id,
         name: user.fullName,
         created_at: user.createdAt
@@ -150,8 +140,8 @@ export function TrackSourceIdentify() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    if (session?.user && window.ts) {
-      window.ts.identify(session.user.email, {
+    if (session?.user && window.TracksSource) {
+      window.TracksSource.identify(session.user.email, {
         name: session.user.name,
         user_id: session.user.id
       });
@@ -171,8 +161,8 @@ export function TrackSourceIdentify() {
   const user = useUser();
 
   useEffect(() => {
-    if (user && window.ts) {
-      window.ts.identify(user.email, {
+    if (user && window.TracksSource) {
+      window.TracksSource.identify(user.email, {
         user_id: user.id,
         created_at: user.created_at
       });
@@ -225,7 +215,7 @@ export async function GET(request: Request) {
 
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com) → Developers → Webhooks
 2. Click **Add endpoint**
-3. Set URL: `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID`
+3. Set URL: `https://events.tracksource.io/payments/YOUR_TENANT_ID/stripe`
 4. Select events:
    - `checkout.session.completed`
    - `customer.subscription.created`
@@ -266,7 +256,8 @@ Frontend:
 ```tsx
 // components/PricingCard.tsx
 async function handleCheckout(priceId: string) {
-  const tsAnonymousId = window.tsLayer?.find(e => e.anonymous_id)?.anonymous_id;
+  const attribution = window.tsAttribution || {};
+  const tsAnonymousId = attribution.anonymous_id;
 
   const response = await fetch('/api/create-checkout', {
     method: 'POST',
@@ -285,7 +276,7 @@ async function handleCheckout(priceId: string) {
 
 ```typescript
 // When user starts a free trial
-ts.track('trial_started', {
+TracksSource.track('trial_started', {
   plan: 'pro',
   trial_days: 14
 });
@@ -295,12 +286,12 @@ ts.track('trial_started', {
 
 ```typescript
 // Track meaningful feature usage
-ts.track('feature_used', {
+TracksSource.track('feature_used', {
   feature: 'api_integration',
   action: 'created'
 });
 
-ts.track('feature_used', {
+TracksSource.track('feature_used', {
   feature: 'team_invite',
   invites_sent: 3
 });
@@ -310,7 +301,7 @@ ts.track('feature_used', {
 
 ```typescript
 // After successful upgrade
-ts.track('plan_upgrade', {
+TracksSource.track('plan_upgrade', {
   from_plan: 'starter',
   to_plan: 'pro',
   conversion_value: 49
@@ -345,8 +336,8 @@ Referral          50       25      50%    $1,225   $600    $10
 ```tsx
 // lib/tracksource.ts
 export function identifyUser(user: { email: string; id: string; name?: string }) {
-  if (typeof window !== 'undefined' && window.ts) {
-    window.ts.identify(user.email, {
+  if (typeof window !== 'undefined' && window.TracksSource) {
+    window.TracksSource.identify(user.email, {
       user_id: user.id,
       name: user.name
     });
@@ -354,14 +345,14 @@ export function identifyUser(user: { email: string; id: string; name?: string })
 }
 
 export function trackEvent(event: string, properties?: Record<string, any>) {
-  if (typeof window !== 'undefined' && window.ts) {
-    window.ts.track(event, properties);
+  if (typeof window !== 'undefined' && window.TracksSource) {
+    window.TracksSource.track(event, properties);
   }
 }
 
 export function getAnonymousId(): string | undefined {
-  if (typeof window !== 'undefined' && window.tsLayer) {
-    return window.tsLayer.find(e => e.anonymous_id)?.anonymous_id;
+  if (typeof window !== 'undefined' && window.tsAttribution) {
+    return window.tsAttribution.anonymous_id;
   }
 }
 

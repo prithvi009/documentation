@@ -47,13 +47,7 @@ Add to your **theme.liquid** file, just before `</head>`:
 
 ```liquid
 <!-- TrackSource Attribution -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 ```
 
 **To add this:**
@@ -71,8 +65,8 @@ Add to your **product.liquid** or **main-product.liquid** template:
 {% comment %} TrackSource Product View {% endcomment %}
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    if (window.ts) {
-      window.ts.track('product_view', {
+    if (window.TracksSource) {
+      window.TracksSource.track('product_view', {
         product_id: '{{ product.id }}',
         product_name: '{{ product.title | escape }}',
         price: {{ product.price | divided_by: 100.0 }},
@@ -96,7 +90,7 @@ Add to your **theme.liquid** or create a snippet:
     // Listen for add to cart events
     document.querySelectorAll('form[action="/cart/add"]').forEach(function(form) {
       form.addEventListener('submit', function(e) {
-        if (window.ts) {
+        if (window.TracksSource) {
           var productData = {
             product_id: form.querySelector('[name="id"]').value,
             quantity: form.querySelector('[name="quantity"]')?.value || 1
@@ -109,7 +103,7 @@ Add to your **theme.liquid** or create a snippet:
           productData.currency = '{{ shop.currency }}';
           {% endif %}
 
-          window.ts.track('add_to_cart', productData);
+          window.TracksSource.track('add_to_cart', productData);
         }
       });
     });
@@ -120,8 +114,8 @@ Add to your **theme.liquid** or create a snippet:
       var url = arguments[0];
       if (typeof url === 'string' && url.includes('/cart/add')) {
         // Track add to cart
-        if (window.ts) {
-          window.ts.track('add_to_cart', {});
+        if (window.TracksSource) {
+          window.TracksSource.track('add_to_cart', {});
         }
       }
       return originalFetch.apply(this, arguments);
@@ -141,8 +135,8 @@ Add to **theme.liquid** (Shopify automatically redirects to checkout):
     var target = e.target;
     if (target.name === 'checkout' || target.closest('[name="checkout"]') ||
         target.closest('a[href*="/checkout"]')) {
-      if (window.ts) {
-        window.ts.track('checkout_started', {
+      if (window.TracksSource) {
+        window.TracksSource.track('checkout_started', {
           cart_total: {{ cart.total_price | divided_by: 100.0 }},
           currency: '{{ shop.currency }}',
           item_count: {{ cart.item_count }}
@@ -161,7 +155,7 @@ Add to **theme.liquid** (Shopify automatically redirects to checkout):
 2. Click **Create webhook**
 3. Configure:
    - Event: **Order payment**
-   - URL: `https://events.tracksource.io/webhooks/shopify/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/ecommerce/YOUR_TENANT_ID/shopify`
    - Format: JSON
 4. Save
 
@@ -179,8 +173,8 @@ Go to **Settings** → **Checkout** → **Order status page** → **Additional s
 {% if first_time_accessed %}
 <script>
   // Final conversion tracking (backup)
-  if (window.ts) {
-    window.ts.track('conversion', {
+  if (window.TracksSource) {
+    window.TracksSource.track('conversion', {
       order_id: '{{ order.order_number }}',
       conversion_value: {{ total_price | divided_by: 100.0 }},
       currency: '{{ currency }}',
@@ -209,15 +203,9 @@ Go to **Settings** → **Checkout** → **Order status page** → **Additional s
 
 Add to your theme's **header.php** or use a plugin like "Insert Headers and Footers":
 
-```php
+```html
 <!-- TrackSource Attribution -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 ```
 
 ### Step 2: Track WooCommerce Events
@@ -234,8 +222,8 @@ function ts_track_product_view() {
     global $product;
     ?>
     <script>
-      if (window.ts) {
-        window.ts.track('product_view', {
+      if (window.TracksSource) {
+        window.TracksSource.track('product_view', {
           product_id: '<?php echo $product->get_id(); ?>',
           product_name: '<?php echo esc_js($product->get_name()); ?>',
           price: <?php echo $product->get_price(); ?>,
@@ -253,8 +241,8 @@ function ts_track_add_to_cart() {
     ?>
     <script>
       jQuery(document.body).on('added_to_cart', function(e, fragments, cart_hash, button) {
-        if (window.ts) {
-          window.ts.track('add_to_cart', {
+        if (window.TracksSource) {
+          window.TracksSource.track('add_to_cart', {
             product_id: button.data('product_id'),
             quantity: button.data('quantity') || 1
           });
@@ -270,8 +258,8 @@ function ts_track_checkout_started() {
     $cart_total = WC()->cart->get_total('edit');
     ?>
     <script>
-      if (window.ts) {
-        window.ts.track('checkout_started', {
+      if (window.TracksSource) {
+        window.TracksSource.track('checkout_started', {
           cart_total: <?php echo $cart_total; ?>,
           currency: '<?php echo get_woocommerce_currency(); ?>'
         });
@@ -302,8 +290,8 @@ function ts_track_purchase($order_id) {
     }
     ?>
     <script>
-      if (window.ts) {
-        window.ts.track('conversion', {
+      if (window.TracksSource) {
+        window.TracksSource.track('conversion', {
           order_id: '<?php echo $order_id; ?>',
           conversion_value: <?php echo $order->get_total(); ?>,
           currency: '<?php echo $order->get_currency(); ?>',
@@ -311,7 +299,7 @@ function ts_track_purchase($order_id) {
           items: <?php echo json_encode($items); ?>
         });
 
-        window.ts.identify('<?php echo $order->get_billing_email(); ?>', {
+        window.TracksSource.identify('<?php echo $order->get_billing_email(); ?>', {
           name: '<?php echo esc_js($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()); ?>',
           phone: '<?php echo esc_js($order->get_billing_phone()); ?>'
         });
@@ -329,7 +317,7 @@ function ts_track_purchase($order_id) {
    - Name: TrackSource Orders
    - Status: Active
    - Topic: **Order created**
-   - Delivery URL: `https://events.tracksource.io/webhooks/woocommerce/YOUR_TENANT_ID`
+   - Delivery URL: `https://events.tracksource.io/ecommerce/YOUR_TENANT_ID/woocommerce`
    - Secret: (optional, for verification)
 4. Save
 
@@ -345,8 +333,8 @@ import { useEffect } from 'react';
 
 export function ProductPage({ product }) {
   useEffect(() => {
-    if (window.ts) {
-      window.ts.track('product_view', {
+    if (window.TracksSource) {
+      window.TracksSource.track('product_view', {
         product_id: product.id,
         product_name: product.name,
         price: product.price,
@@ -370,8 +358,8 @@ export function useAddToCart() {
     cartStore.add(product, quantity);
 
     // Track
-    if (window.ts) {
-      window.ts.track('add_to_cart', {
+    if (window.TracksSource) {
+      window.TracksSource.track('add_to_cart', {
         product_id: product.id,
         product_name: product.name,
         price: product.price,
@@ -393,8 +381,8 @@ import { useEffect } from 'react';
 
 export function CheckoutPage({ cart }) {
   useEffect(() => {
-    if (window.ts) {
-      window.ts.track('checkout_started', {
+    if (window.TracksSource) {
+      window.TracksSource.track('checkout_started', {
         cart_total: cart.total,
         currency: 'USD',
         item_count: cart.items.length

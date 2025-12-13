@@ -247,26 +247,33 @@ For advanced users who want non-blocking async loading:
 
 ## NPM Installation (Advanced)
 
-For projects using npm/yarn:
-
-```bash
-npm install @tracksource/sdk
-```
-
-```javascript
-import { TrackSource } from '@tracksource/sdk';
-
-const ts = new TrackSource('YOUR_TENANT_ID');
-ts.init();
-
-// Track events
-ts.track('page_view');
-ts.identify('user@example.com');
-```
-
 <Note>
-  The npm package requires additional configuration. See the [React integration guide](/integration/react) for details.
+  The npm package is coming soon. For now, use the script tag method above which works with all frameworks including React, Vue, and Next.js.
 </Note>
+
+For React/Next.js projects, you can wrap the script in a component:
+
+```jsx
+// components/TrackSource.jsx
+import { useEffect } from 'react';
+
+export function TrackSource({ tenantId }) {
+  useEffect(() => {
+    if (window.TracksSource) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://events.tracksource.io/sdk/ts.min.js';
+    script.setAttribute('data-tenant', tenantId);
+    script.async = true;
+    document.head.appendChild(script);
+  }, [tenantId]);
+
+  return null;
+}
+
+// Usage in App.jsx or layout.tsx
+<TrackSource tenantId="YOUR_TENANT_ID" />
+```
 
 ## Verify Installation
 

@@ -60,17 +60,11 @@ A common problem with this stack:
 
 ### GoHighLevel (GHL)
 
-Add to your GHL page's custom code section:
+Add to your GHL page's **Header Tracking Code** section:
 
 ```html
-<!-- TrackSource SDK -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<!-- TrackSource SDK - Single line installation -->
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 ```
 
 ### ClickFunnels
@@ -79,18 +73,16 @@ Add to your GHL page's custom code section:
 2. Add tracking code to **Header Code**:
 
 ```html
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 ```
 
 ### Webflow / Unbounce
 
-Add to site-wide custom code or page settings header.
+Add to site-wide custom code or page settings header:
+
+```html
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
+```
 
 ## Step 2: Pass Anonymous ID to Embedded Forms
 
@@ -108,10 +100,9 @@ This is the critical step that solves the iframe problem.
 <script>
   // Wait for TrackSource to initialize
   function updateTypeformWithTrackSource() {
-    // Get TrackSource anonymous ID
-    const tsLayer = window.tsLayer || [];
-    const entry = tsLayer.find(e => e.anonymous_id);
-    const tsId = entry ? entry.anonymous_id : '';
+    // Get TrackSource attribution data
+    const attribution = window.tsAttribution || {};
+    const tsId = attribution.anonymous_id || '';
 
     if (!tsId) {
       // Retry if not ready yet
@@ -148,9 +139,8 @@ This is the critical step that solves the iframe problem.
 ```html
 <script>
   function updateTallyWithTrackSource() {
-    const tsLayer = window.tsLayer || [];
-    const entry = tsLayer.find(e => e.anonymous_id);
-    const tsId = entry ? entry.anonymous_id : '';
+    const attribution = window.tsAttribution || {};
+    const tsId = attribution.anonymous_id || '';
 
     if (!tsId) {
       setTimeout(updateTallyWithTrackSource, 500);
@@ -181,13 +171,12 @@ For native GHL forms, add a hidden field:
 ```html
 <script>
   function populateGHLHiddenField() {
-    const tsLayer = window.tsLayer || [];
-    const entry = tsLayer.find(e => e.anonymous_id);
+    const attribution = window.tsAttribution || {};
 
-    if (entry) {
+    if (attribution.anonymous_id) {
       const hiddenField = document.querySelector('input[name="ts_anonymous_id"]');
       if (hiddenField) {
-        hiddenField.value = entry.anonymous_id;
+        hiddenField.value = attribution.anonymous_id;
       }
     } else {
       setTimeout(populateGHLHiddenField, 500);
@@ -205,7 +194,7 @@ For native GHL forms, add a hidden field:
 1. Go to **Connect** → **Webhooks**
 2. Add webhook URL:
    ```
-   https://events.tracksource.io/webhooks/typeform/YOUR_TENANT_ID
+   https://events.tracksource.io/leads/YOUR_TENANT_ID
    ```
 3. Add hidden field `ts_anonymous_id` in your form
 
@@ -214,7 +203,7 @@ For native GHL forms, add a hidden field:
 1. Go to **Integrations** → **Webhooks**
 2. Add webhook URL:
    ```
-   https://events.tracksource.io/webhooks/tally/YOUR_TENANT_ID
+   https://events.tracksource.io/leads/YOUR_TENANT_ID
    ```
 3. Add hidden field `ts_anonymous_id` in your form
 
@@ -224,7 +213,7 @@ For native GHL forms, add a hidden field:
 2. Create workflow with trigger: **Form Submitted**
 3. Add action: **Webhook**
 4. Configure:
-   - URL: `https://events.tracksource.io/webhooks/gohighlevel/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/leads/YOUR_TENANT_ID`
    - Method: POST
 5. Map fields: email, name, phone, ts_anonymous_id
 
@@ -234,7 +223,7 @@ For native GHL forms, add a hidden field:
 2. Search for **Webhooks**
 3. Add webhook URL:
    ```
-   https://events.tracksource.io/webhooks/jotform/YOUR_TENANT_ID
+   https://events.tracksource.io/leads/YOUR_TENANT_ID
    ```
 
 ## Step 4: Connect Calendly
@@ -255,7 +244,8 @@ When linking to Calendly, include UTMs:
   function getCalendlyUrl() {
     const baseUrl = 'https://calendly.com/your-name/30min';
     const params = new URLSearchParams(window.location.search);
-    const tsId = (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+    const attribution = window.tsAttribution || {};
+    const tsId = attribution.anonymous_id || '';
 
     const calendlyParams = new URLSearchParams();
 
@@ -287,14 +277,14 @@ When linking to Calendly, include UTMs:
 
 1. Go to **Settings** → **Developer** → **Webhooks**
 2. Create webhook:
-   - URL: `https://events.tracksource.io/webhooks/whop/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/payments/YOUR_TENANT_ID/whop`
    - Events: `membership.went_valid`, `payment.succeeded`
 
 ### Stripe
 
 1. Go to **Developers** → **Webhooks**
 2. Add endpoint:
-   - URL: `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/payments/YOUR_TENANT_ID/stripe`
    - Events: `checkout.session.completed`, `payment_intent.succeeded`
 
 ### Passing Anonymous ID Through Checkout
@@ -321,18 +311,12 @@ https://whop.com/checkout/your-product/?ts_anonymous_id=xxx
 Here's the complete code to add to your GHL page:
 
 ```html
-<!-- TRACKSOURCE INTEGRATION - Add to GHL Custom Code -->
+<!-- TRACKSOURCE INTEGRATION - Add to GHL Header Tracking Code -->
 
-<!-- 1. TrackSource SDK -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<!-- 1. TrackSource SDK (single line) -->
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 
-<!-- 2. Pass TrackSource ID to Typeform iframe -->
+<!-- 2. Pass TrackSource ID to Typeform/Tally iframes (add to Body Tracking Code) -->
 <script>
   (function() {
     let attempts = 0;
@@ -341,16 +325,15 @@ Here's the complete code to add to your GHL page:
     function updateForms() {
       attempts++;
 
-      // Get TrackSource anonymous ID
-      const tsLayer = window.tsLayer || [];
-      const entry = tsLayer.find(e => e.anonymous_id);
+      // Get TrackSource attribution data
+      const attribution = window.tsAttribution || {};
+      const tsId = attribution.anonymous_id || '';
 
-      if (!entry && attempts < maxAttempts) {
+      if (!tsId && attempts < maxAttempts) {
         setTimeout(updateForms, 500);
         return;
       }
 
-      const tsId = entry ? entry.anonymous_id : '';
       const urlParams = new URLSearchParams(window.location.search);
 
       // Update Typeform iframes

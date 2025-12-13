@@ -24,16 +24,25 @@ Add this snippet to your website's `<head>`:
 </script>
 ```
 
-### NPM Package
+### NPM Package (Coming Soon)
 
-```bash
-npm install @tracksource/sdk
-```
+For React/Next.js projects, wrap the script in a component:
 
-```javascript
-import TrackSource from '@tracksource/sdk';
+```jsx
+// components/TrackSource.jsx
+import { useEffect } from 'react';
 
-TrackSource.init('YOUR_TENANT_ID');
+export function TrackSource({ tenantId }) {
+  useEffect(() => {
+    if (window.TracksSource) return;
+    const script = document.createElement('script');
+    script.src = 'https://events.tracksource.io/sdk/ts.min.js';
+    script.setAttribute('data-tenant', tenantId);
+    script.async = true;
+    document.head.appendChild(script);
+  }, [tenantId]);
+  return null;
+}
 ```
 
 ## Configuration Options

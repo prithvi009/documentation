@@ -51,15 +51,9 @@ LinkedIn Ad  →  Website  →  Contact Form  →  Discovery Call  →  Proposal
 
 Add to **header.php** before `</head>`:
 
-```php
+```html
 <!-- TrackSource Attribution -->
-<script>
-  (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-  new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-</script>
+<script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
 ```
 
 **Option B: Plugin (Recommended)**
@@ -67,19 +61,28 @@ Add to **header.php** before `</head>`:
 Use "Insert Headers and Footers" plugin:
 1. Install and activate the plugin
 2. Go to **Settings** → **Insert Headers and Footers**
-3. Paste the script in **Scripts in Header**
+3. Paste the script in **Scripts in Header**:
+   ```html
+   <script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
+   ```
 4. Save
 
 ### Webflow
 
 1. Go to **Project Settings** → **Custom Code**
-2. Paste in **Head Code**
+2. Paste in **Head Code**:
+   ```html
+   <script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
+   ```
 3. Publish your site
 
 ### Squarespace
 
 1. Go to **Settings** → **Advanced** → **Code Injection**
-2. Paste in **Header**
+2. Paste in **Header**:
+   ```html
+   <script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
+   ```
 3. Save
 
 ---
@@ -94,7 +97,7 @@ Use "Insert Headers and Footers" plugin:
 2. Select your form → **Options**
 3. Under "Send form notifications to", add:
    ```
-   https://events.tracksource.io/webhooks/hubspot/YOUR_TENANT_ID
+   https://events.tracksource.io/leads/YOUR_TENANT_ID
    ```
 
 **Hidden Field for Attribution:**
@@ -108,7 +111,8 @@ Use "Insert Headers and Footers" plugin:
 <script>
   window.addEventListener('message', function(event) {
     if (event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
-      var tsId = (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+      var attribution = window.tsAttribution || {};
+      var tsId = attribution.anonymous_id || '';
       var field = document.querySelector('input[name="ts_anonymous_id"]');
       if (field && tsId) field.value = tsId;
     }
@@ -135,7 +139,8 @@ function ts_cf7_hidden_field() {
       document.addEventListener('DOMContentLoaded', function() {
         var field = document.querySelector('input[name="ts_anonymous_id"]');
         if (field) {
-          var tsId = (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+          var attribution = window.tsAttribution || {};
+          var tsId = attribution.anonymous_id || '';
           field.value = tsId;
         }
       });
@@ -151,7 +156,7 @@ function ts_cf7_webhook($contact_form) {
 
     $data = $submission->get_posted_data();
 
-    wp_remote_post('https://events.tracksource.io/webhooks/custom/YOUR_TENANT_ID', array(
+    wp_remote_post('https://events.tracksource.io/leads/YOUR_TENANT_ID', array(
         'body' => json_encode(array(
             'email' => $data['your-email'],
             'name' => $data['your-name'],
@@ -168,7 +173,7 @@ function ts_cf7_webhook($contact_form) {
 
 1. Go to **Forms** → **Settings** → **Webhooks**
 2. Add new webhook:
-   - Request URL: `https://events.tracksource.io/webhooks/gravity/YOUR_TENANT_ID`
+   - Request URL: `https://events.tracksource.io/leads/YOUR_TENANT_ID`
    - Request Method: POST
    - Request Format: JSON
 3. Map fields including a hidden field for `ts_anonymous_id`
@@ -177,7 +182,7 @@ function ts_cf7_webhook($contact_form) {
 
 1. Create a workflow triggered by form submission
 2. Add **Webhook** action:
-   - URL: `https://events.tracksource.io/webhooks/gohighlevel/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/leads/YOUR_TENANT_ID`
    - Method: POST
 3. Map contact fields
 
@@ -253,7 +258,7 @@ If you use Stripe for invoicing:
 
 1. Go to **Developers** → **Webhooks**
 2. Add endpoint:
-   - URL: `https://events.tracksource.io/webhooks/stripe/YOUR_TENANT_ID`
+   - URL: `https://events.tracksource.io/payments/YOUR_TENANT_ID/stripe`
    - Events: `invoice.paid`, `invoice.payment_succeeded`
 
 ### Manual Revenue Entry (API)
@@ -295,21 +300,21 @@ Track lead progression through your pipeline:
 
 ```javascript
 // When lead becomes qualified
-ts.track('lead_qualified', {
+TracksSource.track('lead_qualified', {
   email: 'lead@company.com',
   lead_score: 85,
   qualification_method: 'discovery_call'
 });
 
 // When proposal sent
-ts.track('proposal_sent', {
+TracksSource.track('proposal_sent', {
   email: 'lead@company.com',
   proposal_value: 15000,
   service: 'Website Development'
 });
 
 // When deal closed
-ts.track('conversion', {
+TracksSource.track('conversion', {
   email: 'lead@company.com',
   conversion_value: 15000,
   client_name: 'Acme Corp',
@@ -396,13 +401,7 @@ Attribution (Linear): All touchpoints share credit
 add_action('wp_head', 'ts_tracking_script');
 function ts_tracking_script() {
     ?>
-    <script>
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'ts.start':
-      new Date().getTime(),event:'ts.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='tsLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://events.tracksource.io/sdk/ts.min.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','tsLayer','YOUR_TENANT_ID');
-    </script>
+    <script src="https://events.tracksource.io/sdk/ts.min.js" data-tenant="YOUR_TENANT_ID"></script>
     <?php
 }
 
@@ -415,7 +414,8 @@ function ts_populate_hidden_fields() {
         // For HubSpot forms
         window.addEventListener('message', function(event) {
           if (event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
-            var tsId = (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+            var attribution = window.tsAttribution || {};
+            var tsId = attribution.anonymous_id || '';
             var field = document.querySelector('input[name="ts_anonymous_id"]');
             if (field && tsId) field.value = tsId;
           }
@@ -424,7 +424,8 @@ function ts_populate_hidden_fields() {
         // For native WP forms
         var field = document.querySelector('input[name="ts_anonymous_id"]');
         if (field) {
-          var tsId = (window.tsLayer?.find(e => e.anonymous_id) || {}).anonymous_id || '';
+          var attribution = window.tsAttribution || {};
+          var tsId = attribution.anonymous_id || '';
           field.value = tsId;
         }
 
